@@ -2,32 +2,29 @@
 
 import { useQuery, useMutation } from "convex/react";
 import { api } from "convex/_generated/api";
-import { Id } from "convex/_generated/dataModel";
-import KanbanBoard from "@/components/KanbanBoard";
+import LeadTable from "@/components/LeadTable";
 
-export default function Home() {
+export default function LeadsPage() {
   const leads = useQuery(api.leads.list, {});
   const createLead = useMutation(api.leads.create);
   const updateLead = useMutation(api.leads.update);
   const deleteLead = useMutation(api.leads.remove);
 
-  const handleUpdateStatus = async (id: string, status: string) => {
-    await updateLead({ id: id as Id<"leads">, leadStatus: status });
-  };
-
-  const handleSaveLead = async (data: Record<string, unknown>) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleSave = async (data: any) => {
     if (data._id) {
       const { _id, ...fields } = data;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await updateLead({ id: _id as Id<"leads">, ...fields } as any);
+      await updateLead({ id: _id, ...fields } as any);
     } else {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await createLead(data as any);
     }
   };
 
-  const handleDeleteLead = async (id: string) => {
-    await deleteLead({ id: id as Id<"leads"> });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleDelete = async (id: any) => {
+    await deleteLead({ id });
   };
 
   if (leads === undefined) {
@@ -38,12 +35,5 @@ export default function Home() {
     );
   }
 
-  return (
-    <KanbanBoard
-      leads={leads}
-      onUpdateStatus={handleUpdateStatus}
-      onSaveLead={handleSaveLead}
-      onDeleteLead={handleDeleteLead}
-    />
-  );
+  return <LeadTable leads={leads} onSave={handleSave} onDelete={handleDelete} />;
 }
