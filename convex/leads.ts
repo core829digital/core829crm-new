@@ -27,6 +27,7 @@ export const create = mutation({
     refundClawbackAmount: v.number(),
     commissionPercent: v.number(),
     lastTouchDate: v.optional(v.string()),
+    notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const earnings =
@@ -62,6 +63,7 @@ export const update = mutation({
     refundClawbackAmount: v.optional(v.number()),
     commissionPercent: v.optional(v.number()),
     lastTouchDate: v.optional(v.string()),
+    notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { id, ...fields } = args;

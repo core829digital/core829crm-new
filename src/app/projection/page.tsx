@@ -54,8 +54,8 @@ export default function ProjectionPage() {
     const dealSize = avgDealSize ?? 0;
 
     const expected = remainingMeetings * showRate * offRate * closRate * dealSize;
-    const best = remainingMeetings * ((showUpRate ?? 0 + 10) / 100) * ((offerRate ?? 0 + 10) / 100) * ((closeRate ?? 0 + 10) / 100) * (dealSize * 1.15);
-    const worst = remainingMeetings * Math.max(0, (showUpRate ?? 0 - 10) / 100) * Math.max(0, (offerRate ?? 0 - 10) / 100) * Math.max(0, (closeRate ?? 0 - 10) / 100) * (dealSize * 0.85);
+    const best = remainingMeetings * (((showUpRate ?? 0) + 10) / 100) * (((offerRate ?? 0) + 10) / 100) * (((closeRate ?? 0) + 10) / 100) * (dealSize * 1.15);
+    const worst = remainingMeetings * Math.max(0, ((showUpRate ?? 0) - 10) / 100) * Math.max(0, ((offerRate ?? 0) - 10) / 100) * Math.max(0, ((closeRate ?? 0) - 10) / 100) * (dealSize * 0.85);
 
     return { expected, best: Math.max(expected, best), worst: Math.min(expected, worst) };
   }, [remainingMeetings, showUpRate, offerRate, closeRate, avgDealSize]);

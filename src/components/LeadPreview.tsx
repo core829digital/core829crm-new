@@ -162,6 +162,15 @@ export default function LeadPreview({ lead, onClose, onEdit }: LeadPreviewProps)
             </div>
           </div>
 
+          {lead.notes && (
+            <div className="border-t pt-3">
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Notes</h3>
+              <div className="text-xs text-gray-700 whitespace-pre-wrap bg-gray-50 p-3 rounded-md leading-relaxed">
+                {lead.notes}
+              </div>
+            </div>
+          )}
+
           <div className="border-t pt-3">
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
               <DollarSign size={12} className="inline mr-1" />

@@ -52,6 +52,7 @@ interface LeadData {
   offerMade: boolean;
   isOneCallSale?: boolean;
   lossReason?: string;
+  notes?: string;
   depositAmount: number;
   totalDealValue: number;
   cashCollected: number;
@@ -87,6 +88,7 @@ function defaultForm(lead?: LeadData | null): LeadData {
     offerMade: lead?.offerMade ?? false,
     isOneCallSale: lead?.isOneCallSale,
     lossReason: lead?.lossReason || "",
+    notes: lead?.notes || "",
     depositAmount: lead?.depositAmount ?? 0,
     totalDealValue: lead?.totalDealValue ?? 0,
     cashCollected: lead?.cashCollected ?? 0,
@@ -231,6 +233,16 @@ export default function LeadModal({ lead, onClose, onSave, onDelete }: LeadModal
                 </div>
               )}
             </div>
+          </div>
+
+          <div className="border-t pt-4">
+            <h3 className="text-sm font-semibold mb-3">Notes</h3>
+            <textarea
+              className="input min-h-[100px] resize-y"
+              placeholder="Specific details about this lead — pain points, objections, personal details, next steps..."
+              value={form.notes || ""}
+              onChange={(e) => update("notes", e.target.value)}
+            />
           </div>
 
           <div className="border-t pt-4">

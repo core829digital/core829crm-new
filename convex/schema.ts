@@ -55,6 +55,7 @@ export default defineSchema({
     commissionPercent: v.number(),
     earnings: v.number(),
     lastTouchDate: v.optional(v.string()),
+    notes: v.optional(v.string()),
   }).index("by_status", ["leadStatus"])
     .index("by_setter", ["setterName"])
     .index("by_closer", ["closerName"])
