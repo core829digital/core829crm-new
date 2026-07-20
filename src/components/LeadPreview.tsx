@@ -59,7 +59,7 @@ export default function LeadPreview({ lead, onClose, onEdit }: LeadPreviewProps)
               <Edit3 size={14} />
               Edit
             </button>
-            <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded ml-1">
+            <button onClick={onClose} className="p-2 sm:p-1.5 hover:bg-gray-100 rounded ml-1">
               <X size={18} />
             </button>
           </div>

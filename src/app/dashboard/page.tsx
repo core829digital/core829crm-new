@@ -106,8 +106,8 @@ export default function DashboardPage() {
             <option value="all">All Sources</option>
             {allSources.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
-          <input className="input text-sm w-36" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} placeholder="From" />
-          <input className="input text-sm w-36" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} placeholder="To" />
+          <input className="input text-sm w-full sm:w-36" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} placeholder="From" />
+          <input className="input text-sm w-full sm:w-36" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} placeholder="To" />
         </div>
       </div>
 

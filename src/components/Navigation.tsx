@@ -39,7 +39,7 @@ export default function Navigation() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${
+                className={`flex items-center gap-1.5 px-3 sm:py-1.5 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${
                   active
                     ? "bg-red-600 text-white"
                     : "text-zinc-400 hover:text-white hover:bg-zinc-800"

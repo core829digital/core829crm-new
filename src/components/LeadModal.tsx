@@ -125,7 +125,7 @@ export default function LeadModal({ lead, onClose, onSave, onDelete }: LeadModal
           <h2 className="text-lg font-bold">
             {isEditing ? "Edit Lead" : "New Lead"}
           </h2>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
+          <button onClick={onClose} className="p-2 sm:p-1 hover:bg-gray-100 rounded">
             <X size={20} />
           </button>
         </div>

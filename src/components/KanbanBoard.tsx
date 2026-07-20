@@ -73,7 +73,7 @@ export default function KanbanBoard({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
         <h1 className="text-2xl font-bold">Kanban Board</h1>
         <div className="flex gap-2">
           <button
