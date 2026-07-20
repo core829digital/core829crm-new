@@ -5,6 +5,7 @@ import { DragDropContext, Droppable, DropResult } from "@hello-pangea/dnd";
 import { Plus } from "lucide-react";
 import { Doc } from "convex/_generated/dataModel";
 import LeadCard from "./LeadCard";
+import LeadPreview from "./LeadPreview";
 import LeadModal from "./LeadModal";
 import DailyActivityInput from "./DailyActivityInput";
 
@@ -33,8 +34,9 @@ export default function KanbanBoard({
   onSaveLead,
   onDeleteLead,
 }: KanbanBoardProps) {
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingLead, setEditingLead] = useState<Doc<"leads"> | null>(null);
+  const [previewLead, setPreviewLead] = useState<Doc<"leads"> | null>(null);
+  const [editLead, setEditLead] = useState<Doc<"leads"> | null>(null);
+  const [showNewModal, setShowNewModal] = useState(false);
   const [activityOpen, setActivityOpen] = useState(false);
 
   const onDragEnd = useCallback(
@@ -47,25 +49,26 @@ export default function KanbanBoard({
   );
 
   const handleCardClick = (lead: Doc<"leads">) => {
-    setEditingLead(lead);
-    setModalOpen(true);
+    setPreviewLead(lead);
   };
 
   const handleNewLead = () => {
-    setEditingLead(null);
-    setModalOpen(true);
+    setShowNewModal(true);
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSave = (data: any) => {
     onSaveLead(data);
-    setModalOpen(false);
-    setEditingLead(null);
+    setEditLead(null);
+    setPreviewLead(null);
+    setShowNewModal(false);
   };
 
-  const handleClose = () => {
-    setModalOpen(false);
-    setEditingLead(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleDelete = (id: any) => {
+    onDeleteLead(id);
+    setEditLead(null);
+    setPreviewLead(null);
   };
 
   return (
@@ -130,12 +133,28 @@ export default function KanbanBoard({
         </div>
       </DragDropContext>
 
-      {modalOpen && (
+      {showNewModal && (
         <LeadModal
-          lead={editingLead}
-          onClose={handleClose}
+          lead={null}
+          onClose={() => setShowNewModal(false)}
           onSave={handleSave}
-          onDelete={onDeleteLead}
+        />
+      )}
+
+      {previewLead && !editLead && (
+        <LeadPreview
+          lead={previewLead}
+          onClose={() => setPreviewLead(null)}
+          onEdit={() => setEditLead(previewLead)}
+        />
+      )}
+
+      {editLead && (
+        <LeadModal
+          lead={editLead}
+          onClose={() => { setEditLead(null); setPreviewLead(null); }}
+          onSave={handleSave}
+          onDelete={handleDelete}
         />
       )}
 
