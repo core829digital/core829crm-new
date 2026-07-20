@@ -28,7 +28,7 @@ export default function Navigation() {
               alt="Core829"
               width={28}
               height={28}
-              className="invert"
+
               priority
             />
           </Link>
