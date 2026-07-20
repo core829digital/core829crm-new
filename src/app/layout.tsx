@@ -6,6 +6,7 @@ import Navigation from "@/components/Navigation";
 export const metadata: Metadata = {
   title: "Core829 CRM",
   description: "Sales Tracker CRM for setters and closers",
+  icons: { icon: "/logo-icon.png" },
 };
 
 export const dynamic = "force-dynamic";

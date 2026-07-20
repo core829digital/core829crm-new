@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 import { LayoutDashboard, KanbanSquare, Table2, TrendingUp } from "lucide-react";
 
 const links = [
@@ -20,9 +21,16 @@ export default function Navigation() {
         <div className="flex items-center gap-1 sm:gap-6 h-14 overflow-x-auto">
           <Link
             href="/"
-            className="font-bold text-lg whitespace-nowrap mr-2 text-white"
+            className="shrink-0 mr-2"
           >
-            Core<span className="text-red-500">829</span>
+            <Image
+              src="/logo-icon.png"
+              alt="Core829"
+              width={28}
+              height={28}
+              className="invert"
+              priority
+            />
           </Link>
           {links.map((link) => {
             const Icon = link.icon;
