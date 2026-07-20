@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
-import { LayoutDashboard, KanbanSquare, Table2, TrendingUp } from "lucide-react";
+import { LayoutDashboard, KanbanSquare, Table2, TrendingUp, CalendarDays } from "lucide-react";
 
 const links = [
   { href: "/", label: "Kanban", icon: KanbanSquare },
   { href: "/leads", label: "Lead Log", icon: Table2 },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/projection", label: "Projection", icon: TrendingUp },
+  { href: "/calendar", label: "Calendar", icon: CalendarDays },
 ];
 
 export default function Navigation() {
