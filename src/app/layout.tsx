@@ -8,6 +8,8 @@ export const metadata: Metadata = {
   description: "Sales Tracker CRM for setters and closers",
 };
 
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({
   children,
 }: Readonly<{
