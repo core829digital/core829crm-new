@@ -70,6 +70,7 @@ interface LeadModalProps {
 
 function defaultForm(lead?: LeadData | null): LeadData {
   return {
+    _id: lead?._id,
     leadName: lead?.leadName || "",
     company: lead?.company || "",
     email: lead?.email || "",
