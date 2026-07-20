@@ -20,7 +20,7 @@ export default function RootLayout({
       <body className="min-h-screen bg-[#fafafa]">
         <ConvexWrapper>
           <Navigation />
-          <main className="max-w-7xl mx-auto px-4 py-6">{children}</main>
+          <main className="mx-auto px-4 py-6">{children}</main>
         </ConvexWrapper>
       </body>
     </html>

@@ -90,7 +90,7 @@ export default function KanbanBoard({
       </div>
 
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="flex gap-4 overflow-x-auto pb-4">
+        <div className="flex gap-2 sm:gap-3 pb-4 kanban-scroll">
           {columns.map((col) => {
             const colLeads = leads.filter((l) => l.leadStatus === col);
             return (
@@ -99,19 +99,19 @@ export default function KanbanBoard({
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`kanban-column rounded-lg ${
+                    className={`flex-1 min-w-0 rounded-lg ${
                       snapshot.isDraggingOver ? "bg-gray-100" : "bg-gray-50"
-                    } p-3`}
+                    } p-2 sm:p-3`}
                   >
-                    <div className="flex items-center justify-between mb-3 px-1">
-                      <h3 className="font-semibold text-sm text-gray-700">
+                    <div className="flex items-center justify-between mb-2 sm:mb-3 px-1">
+                      <h3 className="font-semibold text-xs sm:text-sm text-gray-700 truncate">
                         {col}
                       </h3>
-                      <span className="badge badge-gray text-xs">
+                      <span className="badge badge-gray text-xs shrink-0 ml-1">
                         {colLeads.length}
                       </span>
                     </div>
-                    <div className="space-y-2 min-h-[60px]">
+                    <div className="space-y-1.5 sm:space-y-2 min-h-[60px]">
                       {colLeads.map((lead, index) => (
                         <LeadCard
                           key={lead._id}
