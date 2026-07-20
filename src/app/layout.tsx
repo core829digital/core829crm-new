@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import ConvexClientProvider from "@/components/ConvexClientProvider";
+import ConvexWrapper from "@/components/ConvexWrapper";
 import Navigation from "@/components/Navigation";
 
 export const metadata: Metadata = {
@@ -18,10 +18,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen bg-[#fafafa]">
-        <ConvexClientProvider>
+        <ConvexWrapper>
           <Navigation />
           <main className="max-w-7xl mx-auto px-4 py-6">{children}</main>
-        </ConvexClientProvider>
+        </ConvexWrapper>
       </body>
     </html>
   );
