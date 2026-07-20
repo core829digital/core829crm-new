@@ -47,6 +47,7 @@ export const update = mutation({
     setterName: v.optional(v.string()),
     closerName: v.optional(v.string()),
     leadStatus: v.optional(v.string()),
+    dateCreated: v.optional(v.string()),
     firstContactDate: v.optional(v.string()),
     dateMeetingBooked: v.optional(v.string()),
     dateOfMeeting: v.optional(v.string()),
