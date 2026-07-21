@@ -28,12 +28,25 @@ export const create = mutation({
     commissionPercent: v.number(),
     lastTouchDate: v.optional(v.string()),
     notes: v.optional(v.string()),
+    _userId: v.optional(v.string()),
+    _userName: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const { _userId, _userName, ...rest } = args;
     const earnings =
-      (args.totalDealValue - args.refundClawbackAmount) *
-      (args.commissionPercent / 100);
-    return await ctx.db.insert("leads", { ...args, earnings });
+      (rest.totalDealValue - rest.refundClawbackAmount) *
+      (rest.commissionPercent / 100);
+    const id = await ctx.db.insert("leads", { ...rest, earnings });
+    if (_userId && _userName) {
+      await ctx.db.insert("activityLogs", {
+        userId: _userId,
+        userName: _userName,
+        action: "Created lead",
+        details: `Lead: ${rest.leadName} (${rest.company})`,
+        timestamp: new Date().toISOString(),
+      });
+    }
+    return id;
   },
 });
 
@@ -64,9 +77,11 @@ export const update = mutation({
     commissionPercent: v.optional(v.number()),
     lastTouchDate: v.optional(v.string()),
     notes: v.optional(v.string()),
+    _userId: v.optional(v.string()),
+    _userName: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const { id, ...fields } = args;
+    const { id, _userId, _userName, ...fields } = args;
     const existing = await ctx.db.get(id);
     if (!existing) throw new Error("Lead not found");
 
@@ -86,6 +101,17 @@ export const update = mutation({
       ((commissionPercent as number) / 100);
 
     await ctx.db.patch(id, updates);
+
+    if (_userId && _userName) {
+      const changedFields = Object.keys(updates).filter(k => k !== "earnings").join(", ");
+      await ctx.db.insert("activityLogs", {
+        userId: _userId,
+        userName: _userName,
+        action: "Updated lead",
+        details: `Lead: ${existing.leadName} — changed: ${changedFields || "earnings"}`,
+        timestamp: new Date().toISOString(),
+      });
+    }
 
     if (updates.leadStatus === "Won" && existing.leadStatus !== "Won") {
       const existingClient = await ctx.db

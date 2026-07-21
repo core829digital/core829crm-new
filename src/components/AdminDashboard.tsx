@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "convex/_generated/api";
 import { useAuth } from "./AuthContext";
 import {
@@ -227,6 +227,7 @@ function ActivityLogs() {
 }
 
 function MarketAnalysis() {
+  const fetchRatesAction = useAction(api.market.fetchRates);
   const [rates, setRates] = useState<Record<string, number> | null>(null);
   const [loading, setLoading] = useState(false);
   const [baseCurrency, setBaseCurrency] = useState("USD");
@@ -234,8 +235,7 @@ function MarketAnalysis() {
   const fetchRates = async (base: string) => {
     setLoading(true);
     try {
-      const res = await fetch(`https://api.frankfurter.app/latest?from=${base}`);
-      const data = await res.json();
+      const data = await fetchRatesAction({ from: base });
       setRates(data.rates);
     } catch {
       setRates(null);
@@ -253,8 +253,7 @@ function MarketAnalysis() {
   const convert = async () => {
     setConvLoading(true);
     try {
-      const res = await fetch(`https://api.frankfurter.app/latest?amount=${amount}&from=${fromCur}&to=${toCur}`);
-      const data = await res.json();
+      const data = await fetchRatesAction({ from: fromCur, to: toCur, amount });
       setConvResult(data.rates[toCur]);
     } catch {
       setConvResult(null);

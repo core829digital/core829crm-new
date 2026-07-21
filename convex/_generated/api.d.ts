@@ -13,6 +13,7 @@ import type * as clients from "../clients.js";
 import type * as dailyActivity from "../dailyActivity.js";
 import type * as invoices from "../invoices.js";
 import type * as leads from "../leads.js";
+import type * as market from "../market.js";
 import type * as migrations from "../migrations.js";
 import type * as projects from "../projects.js";
 import type * as revenueGoal from "../revenueGoal.js";
@@ -31,6 +32,7 @@ declare const fullApi: ApiFromModules<{
   dailyActivity: typeof dailyActivity;
   invoices: typeof invoices;
   leads: typeof leads;
+  market: typeof market;
   migrations: typeof migrations;
   projects: typeof projects;
   revenueGoal: typeof revenueGoal;
