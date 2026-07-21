@@ -474,10 +474,16 @@ function AnnouncementsManagement() {
   const [textColor, setTextColor] = useState("#ffffff");
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<Id<"announcements"> | null>(null);
+  const [errMsg, setErrMsg] = useState("");
+
+  const resetForm = () => {
+    setText(""); setBgColor("#18181b"); setTextColor("#ffffff"); setEditingId(null); setErrMsg("");
+  };
 
   const handleSave = async () => {
-    if (!text.trim()) return;
+    if (!text.trim()) { setErrMsg("Text cannot be empty"); return; }
     setSaving(true);
+    setErrMsg("");
     try {
       if (editingId) {
         await updateAnnouncement({ id: editingId, text: text.trim(), bgColor, textColor });
@@ -485,24 +491,26 @@ function AnnouncementsManagement() {
         const count = announcements?.length || 0;
         await createAnnouncement({ text: text.trim(), bgColor, textColor, order: count + 1 });
       }
-      setText(""); setBgColor("#18181b"); setTextColor("#ffffff"); setEditingId(null);
+      resetForm();
     } catch (e) {
-      console.error(e);
+      setErrMsg("Failed: " + (e instanceof Error ? e.message : "Unknown error"));
     } finally {
       setSaving(false);
     }
   };
 
   const handleEdit = (a: { _id: Id<"announcements">; text: string; bgColor: string; textColor: string }) => {
-    setText(a.text); setBgColor(a.bgColor); setTextColor(a.textColor); setEditingId(a._id);
+    setText(a.text); setBgColor(a.bgColor); setTextColor(a.textColor); setEditingId(a._id); setErrMsg("");
   };
 
-  const handleCancel = () => {
-    setText(""); setBgColor("#18181b"); setTextColor("#ffffff"); setEditingId(null);
-  };
+  const handleCancel = () => { resetForm(); };
 
   const handleToggle = async (a: { _id: Id<"announcements">; isActive: boolean }) => {
-    await updateAnnouncement({ id: a._id, isActive: !a.isActive });
+    try {
+      await updateAnnouncement({ id: a._id, isActive: !a.isActive });
+    } catch (e) {
+      setErrMsg("Toggle failed: " + (e instanceof Error ? e.message : "Unknown error"));
+    }
   };
 
   const activeCount = announcements?.filter((a) => a.isActive).length || 0;
@@ -517,17 +525,20 @@ function AnnouncementsManagement() {
           <span className="text-xs text-zinc-400">{activeCount}/5 active</span>
         </div>
 
-        <div className="bg-zinc-50 rounded-lg p-4 mb-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
-              {editingId ? "Edit Announcement" : "New Announcement"}
-            </h3>
-            {editingId && (
-              <button onClick={handleCancel} className="text-xs text-zinc-400 hover:text-zinc-600">
-                Cancel
-              </button>
+          <div className="bg-zinc-50 rounded-lg p-4 mb-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                {editingId ? "Edit Announcement" : "New Announcement"}
+              </h3>
+              {editingId && (
+                <button onClick={handleCancel} className="text-xs text-zinc-400 hover:text-zinc-600">
+                  Cancel
+                </button>
+              )}
+            </div>
+            {errMsg && (
+              <div className="bg-red-100 text-red-600 text-sm rounded-lg px-3 py-2">{errMsg}</div>
             )}
-          </div>
           <textarea
             placeholder="Announcement text..."
             className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm"
