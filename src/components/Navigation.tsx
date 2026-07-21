@@ -65,16 +65,18 @@ export default function Navigation() {
           )}
 
           <div className="ml-auto flex items-center gap-3 shrink-0 pl-2 border-l border-zinc-700">
-            <div className="text-right hidden sm:block">
-              <div className="text-xs font-medium text-white leading-tight">
-                {user?.name} {user?.surname}
-              </div>
-              <div className="text-[10px] text-zinc-500 leading-tight">
-                {user?.userId} &middot; {user?.role}
+            <div className="hidden sm:flex items-center gap-2.5 bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-lg px-3 py-1.5 border border-zinc-700/50">
+              <div className="text-right">
+                <div className="text-xs font-medium text-white leading-tight">
+                  {user?.name} {user?.surname}
+                </div>
+                <div className="text-[10px] text-zinc-400 leading-tight">
+                  {user?.userId} &middot; {user?.role}
+                </div>
               </div>
             </div>
-            <div className="sm:hidden text-right">
-              <div className="text-[10px] text-zinc-400 leading-tight">{user?.userId}</div>
+            <div className="sm:hidden bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-md px-2 py-1">
+              <div className="text-[10px] text-zinc-300 leading-tight">{user?.userId}</div>
             </div>
             <button
               onClick={handleLogout}
