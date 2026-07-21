@@ -10,33 +10,51 @@ const GAP = 64;
 export default function AnnouncementBanner() {
   const announcements = useQuery(api.announcements.listActive);
   const trackRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const el = trackRef.current;
-    if (!el || !announcements || announcements.length === 0) return;
-    const container = el.parentElement;
-    let pos = container?.offsetWidth || 0;
+    const view = containerRef.current;
+    if (!el || !view || !announcements || announcements.length === 0) return;
+
+    const children = Array.from(el.children) as HTMLElement[];
+    if (children.length === 0) return;
+
+    const SPEED = 0.5;
     let running = true;
+
+    const totalWidth = children.reduce((sum, c) => sum + c.offsetWidth + GAP, 0);
+    const viewW = view.offsetWidth;
+    let startX = viewW;
+    const xs = new Array(children.length);
+
+    for (let i = 0; i < children.length; i++) {
+      xs[i] = startX;
+      children[i].style.transform = `translateX(${startX}px)`;
+      startX += children[i].offsetWidth + GAP;
+    }
 
     const step = () => {
       if (!running) return;
-      const child = el.firstElementChild as HTMLElement | null;
-      if (!child) { running = false; return; }
 
-      const childWidth = child.offsetWidth;
-      pos -= 0.5;
-
-      if (pos + childWidth + GAP < 0) {
-        pos += childWidth + GAP;
-        el.appendChild(child);
+      for (let i = 0; i < children.length; i++) {
+        xs[i] -= SPEED;
+        children[i].style.transform = `translateX(${xs[i]}px)`;
       }
 
-      el.style.transform = `translateX(${pos}px)`;
+      if (xs[0] + children[0].offsetWidth + GAP < 0) {
+        const last = children.length - 1;
+        xs[0] = xs[last] + children[last].offsetWidth + GAP;
+        children.push(children.shift()!);
+        const firstX = xs.shift()!;
+        xs.push(firstX);
+      }
+
       requestAnimationFrame(step);
     };
 
-    requestAnimationFrame(step);
-    return () => { running = false; };
+    const id = requestAnimationFrame(step);
+    return () => { running = false; cancelAnimationFrame(id); };
   }, [announcements]);
 
   if (!announcements || announcements.length === 0) return null;
@@ -50,15 +68,15 @@ export default function AnnouncementBanner() {
         <div className="flex items-center gap-1.5 px-3 h-full shrink-0 z-10" style={{ backgroundColor: bg }}>
           <Megaphone size={14} className="shrink-0" style={{ color: fg }} />
         </div>
-        <div className="overflow-hidden flex-1">
-          <div ref={trackRef} className="flex whitespace-nowrap">
+        <div ref={containerRef} className="overflow-hidden flex-1 relative">
+          <div ref={trackRef} className="absolute inset-0">
             {announcements.map((a) => (
               <span
                 key={a._id}
-                className="text-xs font-medium leading-9 shrink-0"
-                style={{ color: fg, marginRight: `${GAP}px` }}
+                className="absolute top-0 left-0 text-xs font-medium leading-9 whitespace-nowrap"
+                style={{ color: fg }}
               >
-                {a.text}
+                {a.text}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
               </span>
             ))}
           </div>
