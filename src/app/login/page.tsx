@@ -33,11 +33,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fafafa] flex items-center justify-center p-4">
-      <div className="w-full max-w-sm">
-        <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 p-8">
+    <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden bg-zinc-950">
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-1/2 -left-1/2 w-[1000px] h-[1000px] rounded-full bg-gradient-to-br from-red-500/20 via-red-500/10 to-transparent animate-[spin_30s_linear_infinite]" />
+        <div className="absolute -bottom-1/2 -right-1/2 w-[800px] h-[800px] rounded-full bg-gradient-to-tl from-zinc-800/40 via-zinc-700/20 to-transparent animate-[spin_40s_linear_infinite_reverse]" />
+        <div className="absolute top-1/3 right-1/4 w-[400px] h-[400px] rounded-full bg-red-500/10 blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 left-1/3 w-[500px] h-[500px] rounded-full bg-zinc-700/20 blur-3xl animate-pulse" style={{ animationDelay: "2s", animationDuration: "6s" }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-r from-red-500/5 to-zinc-800/5 blur-2xl animate-pulse" style={{ animationDuration: "8s" }} />
+      </div>
+      <div className="w-full max-w-sm relative">
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
           <div className="flex justify-center mb-6">
-            <div className="bg-black rounded-full p-3">
+            <div className="bg-black rounded-full p-3 shadow-lg">
               <Image src="/logo-icon.png" alt="Core829" width={32} height={32} priority />
             </div>
           </div>
