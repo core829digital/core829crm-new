@@ -18,7 +18,7 @@ export default function AnnouncementBanner() {
 
   if (!announcements || announcements.length === 0) return null;
 
-  const items = [...announcements, ...announcements, ...announcements];
+  const items = [...announcements, ...announcements];
 
   return (
     <div
@@ -52,7 +52,7 @@ export default function AnnouncementBanner() {
       <style>{`
         @keyframes scrollBanner {
           0% { transform: translateX(0); }
-          100% { transform: translateX(-${100 / 3}%); }
+          100% { transform: translateX(-50%); }
         }
       `}</style>
     </div>
