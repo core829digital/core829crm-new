@@ -155,5 +155,5 @@ export default defineSchema({
     isActive: v.boolean(),
     order: v.number(),
     createdAt: v.string(),
-  }),
+  }).index("by_active", ["isActive"]),
 });

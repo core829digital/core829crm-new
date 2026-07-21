@@ -55,8 +55,7 @@ export const listActive = query({
   handler: async (ctx) => {
     return await ctx.db
       .query("announcements")
-      .filter((q) => q.eq(q.field("isActive"), true))
-      .order("asc")
+      .withIndex("by_active", (q) => q.eq("isActive", true))
       .collect();
   },
 });
