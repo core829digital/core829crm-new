@@ -2,7 +2,6 @@
 
 import { useQuery, useMutation } from "convex/react";
 import { api } from "convex/_generated/api";
-import { Id } from "convex/_generated/dataModel";
 import Calendar from "@/components/Calendar";
 
 export default function CalendarPage() {
@@ -11,10 +10,12 @@ export default function CalendarPage() {
   const updateLead = useMutation(api.leads.update);
 
   const handleCreateLead = async (data: Record<string, unknown>) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return await createLead(data as any);
   };
 
   const handleUpdateLead = async (data: Record<string, unknown>) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await updateLead(data as any);
   };
 
