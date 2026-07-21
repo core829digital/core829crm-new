@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { notify } from "./notify";
 
 export const logActivity = mutation({
   args: {
@@ -27,6 +28,14 @@ export const logActivity = mutation({
       });
     } else {
       await ctx.db.insert("dailyActivities", args);
+    }
+
+    if (args.dialsDMsent >= 100 || args.callsTaken >= 20) {
+      await notify(ctx, {
+        type: "activity_milestone",
+        title: "Activity Milestone",
+        message: `${args.setterName}: ${args.dialsDMsent} dials/DMs, ${args.conversations} convos, ${args.callsTaken} calls taken`,
+      });
     }
   },
 });

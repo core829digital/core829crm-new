@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { notify } from "./notify";
 
 async function hashPassword(password: string, salt: string): Promise<string> {
   const enc = new TextEncoder();
@@ -58,13 +59,11 @@ export const createUser = mutation({
     role: v.string(),
   },
   handler: async (ctx, args) => {
-    if (args.adminUserId !== "00001") throw new Error("Only admin can create users");
-
-    const existing = await ctx.db
+    const admin = await ctx.db
       .query("users")
       .withIndex("by_userId", (q) => q.eq("userId", args.adminUserId))
       .first();
-    if (!existing) throw new Error("Admin not found");
+    if (!admin || admin.userId !== "00001") throw new Error("Only admin can create users");
 
     const newUserId = generateUserId();
     const salt = generateSalt();
@@ -79,6 +78,12 @@ export const createUser = mutation({
       role: args.role,
       createdBy: args.adminUserId,
       createdAt: new Date().toISOString(),
+    });
+
+    await notify(ctx, {
+      type: "user_created",
+      title: "New User Created",
+      message: `${args.name} ${args.surname} — ${args.role} (ID: ${newUserId})`,
     });
 
     return newUserId;
@@ -113,7 +118,7 @@ export const updateUser = mutation({
   handler: async (ctx, args) => {
     if (args.adminUserId !== "00001") throw new Error("Only admin can update users");
 
-    const { id, password, ...fields } = args;
+    const { id, password, adminUserId: _, ...fields } = args;
     const updates: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(fields)) {
       if (value !== undefined) updates[key] = value;

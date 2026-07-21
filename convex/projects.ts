@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { notify } from "./notify";
 
 export const getByClientId = query({
   args: { clientId: v.id("clients") },
@@ -34,6 +35,12 @@ export const create = mutation({
       ...args,
       createdAt: new Date().toISOString(),
     });
+    await notify(ctx, {
+      type: "project_created",
+      title: "New Project Created",
+      message: `${args.projectName} — ${args.status}`,
+      link: "/",
+    });
     return id;
   },
 });
@@ -55,6 +62,15 @@ export const update = mutation({
       if (value !== undefined) updates[key] = value;
     }
     await ctx.db.patch(id, updates);
+    const project = await ctx.db.get(id);
+    if (project) {
+      await notify(ctx, {
+        type: "project_updated",
+        title: "Project Updated",
+        message: `${project.projectName} — status update`,
+        link: "/",
+      });
+    }
   },
 });
 

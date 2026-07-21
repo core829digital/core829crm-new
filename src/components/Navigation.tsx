@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { useAuth } from "./AuthContext";
+import NotificationBell from "./NotificationBell";
 import { LayoutDashboard, KanbanSquare, Table2, TrendingUp, CalendarDays, Users, Shield, LogOut } from "lucide-react";
 
 const links = [
@@ -64,7 +65,8 @@ export default function Navigation() {
             </Link>
           )}
 
-          <div className="ml-auto flex items-center gap-3 shrink-0 pl-2 border-l border-zinc-700">
+          <div className="ml-auto flex items-center gap-1.5 shrink-0 pl-2 border-l border-zinc-700">
+            <NotificationBell />
             <div className="hidden sm:flex items-center gap-2.5 bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-lg px-3 py-1.5 border border-zinc-700/50">
               <div className="text-right">
                 <div className="text-xs font-medium text-white leading-tight">

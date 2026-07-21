@@ -29,14 +29,7 @@ export const seedAdmin = mutation({
     const passwordHash = await hashPassword("STEFANdenis@2026", salt);
 
     if (existing) {
-      await ctx.db.patch(existing._id, {
-        name: "Stefan",
-        surname: "Serban",
-        passwordHash,
-        salt,
-        role: "Founder / CEO",
-      });
-      return { created: false, message: "Admin updated: Stefan Serban, Founder / CEO" };
+      return { created: false, message: "Admin already exists. Skipping seed." };
     }
 
     await ctx.db.insert("users", {

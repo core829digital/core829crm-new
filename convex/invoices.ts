@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { notify } from "./notify";
 
 export const generateUploadUrl = mutation({
   handler: async (ctx) => {
@@ -32,6 +33,12 @@ export const create = mutation({
       ...args,
       createdAt: new Date().toISOString(),
     });
+    await notify(ctx, {
+      type: "invoice_created",
+      title: "New Invoice Created",
+      message: `${args.invoiceNumber} — $${args.amount.toLocaleString()}`,
+      link: "/",
+    });
     return id;
   },
 });
@@ -51,6 +58,14 @@ export const update = mutation({
       if (value !== undefined) updates[key] = value;
     }
     await ctx.db.patch(id, updates);
+    if (updates.status) {
+      await notify(ctx, {
+        type: "invoice_status",
+        title: `Invoice ${updates.status}`,
+        message: `${args.invoiceNumber || id} — status: ${updates.status}`,
+        link: "/",
+      });
+    }
   },
 });
 

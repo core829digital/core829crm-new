@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { notify } from "./notify";
 
 export const list = query({
   args: {},
@@ -37,6 +38,12 @@ export const create = mutation({
     const id = await ctx.db.insert("clients", {
       ...args,
       createdAt: new Date().toISOString(),
+    });
+    await notify(ctx, {
+      type: "client_created",
+      title: "New Client Created",
+      message: `${args.clientName} (${args.company})`,
+      link: "/",
     });
     return id;
   },

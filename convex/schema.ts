@@ -148,6 +148,17 @@ export default defineSchema({
   }).index("by_userId", ["userId"])
     .index("by_timestamp", ["timestamp"]),
 
+  notifications: defineTable({
+    userId: v.optional(v.string()),
+    type: v.string(),
+    title: v.string(),
+    message: v.string(),
+    link: v.optional(v.string()),
+    isRead: v.boolean(),
+    createdAt: v.string(),
+  }).index("by_userId", ["userId"])
+    .index("by_all", ["createdAt"]),
+
   announcements: defineTable({
     text: v.string(),
     bgColor: v.string(),

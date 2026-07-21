@@ -780,7 +780,6 @@ function PdfPreviewModal({ fileUrl, fileName, onClose, onDownload }: {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
     fetch(fileUrl)
       .then((res) => res.blob())
       .then((blob) => {

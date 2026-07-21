@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { lossReasons } from "./schema";
+import { notify } from "./notify";
 
 export const create = mutation({
   args: {
@@ -46,6 +47,12 @@ export const create = mutation({
         timestamp: new Date().toISOString(),
       });
     }
+    await notify(ctx, {
+      type: "lead_created",
+      title: "New Lead Created",
+      message: `${rest.leadName} (${rest.company}) — ${rest.leadStatus}`,
+      link: "/",
+    });
     return id;
   },
 });
@@ -101,6 +108,27 @@ export const update = mutation({
       ((commissionPercent as number) / 100);
 
     await ctx.db.patch(id, updates);
+
+    const newStatus = updates.leadStatus as string | undefined;
+    if (newStatus && newStatus !== existing.leadStatus) {
+      await notify(ctx, {
+        type: "lead_status_change",
+        title: "Lead Status Changed",
+        message: `${existing.leadName} (${existing.company}): ${existing.leadStatus} → ${newStatus}`,
+        link: "/",
+      });
+    }
+    if (
+      updates.meetingStatus &&
+      updates.meetingStatus !== existing.meetingStatus
+    ) {
+      await notify(ctx, {
+        type: "lead_meeting",
+        title: `Meeting ${updates.meetingStatus}`,
+        message: `${existing.leadName} (${existing.company}) — ${updates.meetingStatus}`,
+        link: "/",
+      });
+    }
 
     if (_userId && _userName) {
       const changedFields = Object.keys(updates).filter(k => k !== "earnings").join(", ");
