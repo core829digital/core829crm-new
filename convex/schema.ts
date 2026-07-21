@@ -147,4 +147,13 @@ export default defineSchema({
     timestamp: v.string(),
   }).index("by_userId", ["userId"])
     .index("by_timestamp", ["timestamp"]),
+
+  announcements: defineTable({
+    text: v.string(),
+    bgColor: v.string(),
+    textColor: v.string(),
+    isActive: v.boolean(),
+    order: v.number(),
+    createdAt: v.string(),
+  }),
 });

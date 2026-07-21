@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "convex/_generated/api";
+import type { Id } from "convex/_generated/dataModel";
 import { useAuth } from "./AuthContext";
 import {
   Users, Shield, Activity, BarChart3, TrendingUp, Plus, X, Loader2,
-  RefreshCw, DollarSign, Coins, UserCheck, Target,
+  RefreshCw, DollarSign, Coins, UserCheck, Target, Megaphone, Pencil,
 } from "lucide-react";
 
 const allRoles = [
@@ -40,7 +41,7 @@ const allRoles = [
   "Logistics & Vendor Manager", "Office Manager", "General Administrative Assistant",
 ];
 
-type Tab = "users" | "logs" | "market" | "performance";
+type Tab = "users" | "logs" | "market" | "performance" | "announcements";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -66,6 +67,7 @@ function AdminContent() {
     { id: "logs" as Tab, label: "Activity Logs", icon: Activity },
     { id: "market" as Tab, label: "Market Analysis", icon: TrendingUp },
     { id: "performance" as Tab, label: "Performance", icon: BarChart3 },
+    { id: "announcements" as Tab, label: "Announcements", icon: Megaphone },
   ];
 
   return (
@@ -97,6 +99,7 @@ function AdminContent() {
       {tab === "logs" && <ActivityLogs />}
       {tab === "market" && <MarketAnalysis />}
       {tab === "performance" && <UserPerformance />}
+      {tab === "announcements" && <AnnouncementsManagement />}
     </div>
   );
 }
@@ -442,6 +445,175 @@ function UserPerformance() {
           {userStats.filter((u) => u.revenue > 0).length === 0 && (
             <p className="text-sm text-zinc-400 text-center py-4">No closed deals yet</p>
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const PRESET_COLORS = [
+  { label: "Dark", bg: "#18181b", text: "#ffffff" },
+  { label: "Red", bg: "#dc2626", text: "#ffffff" },
+  { label: "Blue", bg: "#2563eb", text: "#ffffff" },
+  { label: "Green", bg: "#16a34a", text: "#ffffff" },
+  { label: "Amber", bg: "#d97706", text: "#ffffff" },
+  { label: "Purple", bg: "#9333ea", text: "#ffffff" },
+  { label: "Zinc", bg: "#27272a", text: "#ffffff" },
+  { label: "Rose", bg: "#e11d48", text: "#ffffff" },
+  { label: "White", bg: "#ffffff", text: "#18181b" },
+];
+
+function AnnouncementsManagement() {
+  const announcements = useQuery(api.announcements.list);
+  const createAnnouncement = useMutation(api.announcements.create);
+  const updateAnnouncement = useMutation(api.announcements.update);
+  const removeAnnouncement = useMutation(api.announcements.remove);
+
+  const [text, setText] = useState("");
+  const [bgColor, setBgColor] = useState("#18181b");
+  const [textColor, setTextColor] = useState("#ffffff");
+  const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<Id<"announcements"> | null>(null);
+
+  const handleSave = async () => {
+    if (!text.trim()) return;
+    setSaving(true);
+    try {
+      if (editingId) {
+        await updateAnnouncement({ id: editingId, text: text.trim(), bgColor, textColor });
+      } else {
+        const count = announcements?.length || 0;
+        await createAnnouncement({ text: text.trim(), bgColor, textColor, order: count + 1 });
+      }
+      setText(""); setBgColor("#18181b"); setTextColor("#ffffff"); setEditingId(null);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleEdit = (a: { _id: Id<"announcements">; text: string; bgColor: string; textColor: string }) => {
+    setText(a.text); setBgColor(a.bgColor); setTextColor(a.textColor); setEditingId(a._id);
+  };
+
+  const handleCancel = () => {
+    setText(""); setBgColor("#18181b"); setTextColor("#ffffff"); setEditingId(null);
+  };
+
+  const handleToggle = async (a: { _id: Id<"announcements">; isActive: boolean }) => {
+    await updateAnnouncement({ id: a._id, isActive: !a.isActive });
+  };
+
+  const activeCount = announcements?.filter((a) => a.isActive).length || 0;
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-white rounded-xl border border-zinc-200 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-semibold flex items-center gap-2">
+            <Megaphone size={18} /> Announcements
+          </h2>
+          <span className="text-xs text-zinc-400">{activeCount}/5 active</span>
+        </div>
+
+        <div className="bg-zinc-50 rounded-lg p-4 mb-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
+              {editingId ? "Edit Announcement" : "New Announcement"}
+            </h3>
+            {editingId && (
+              <button onClick={handleCancel} className="text-xs text-zinc-400 hover:text-zinc-600">
+                Cancel
+              </button>
+            )}
+          </div>
+          <textarea
+            placeholder="Announcement text..."
+            className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm"
+            rows={2}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            maxLength={200}
+          />
+          <div className="text-xs text-zinc-400 text-right">{text.length}/200</div>
+          <div>
+            <label className="text-xs text-zinc-500 block mb-1.5">Color preset</label>
+            <div className="flex flex-wrap gap-1.5">
+              {PRESET_COLORS.map((p) => (
+                <button
+                  key={p.label}
+                  onClick={() => { setBgColor(p.bg); setTextColor(p.text); }}
+                  className={`w-7 h-7 rounded-full border-2 transition-all ${
+                    bgColor === p.bg ? "border-black scale-110" : "border-transparent hover:scale-105"
+                  }`}
+                  style={{ backgroundColor: p.bg }}
+                  title={p.label}
+                />
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div>
+              <label className="text-xs text-zinc-500 block mb-1">Preview</label>
+              <div className="rounded-lg px-3 py-1.5 text-xs font-medium" style={{ backgroundColor: bgColor, color: textColor }}>
+                {text || "Preview text"}
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={handleSave}
+            disabled={saving || !text.trim()}
+            className="w-full bg-black text-white py-2 rounded-lg text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {saving ? <Loader2 size={16} className="animate-spin" /> : <Megaphone size={16} />}
+            {editingId ? "Update Announcement" : "Add Announcement"}
+          </button>
+        </div>
+
+        <div className="space-y-2">
+          {announcements?.length === 0 && (
+            <p className="text-sm text-zinc-400 text-center py-6">No announcements yet</p>
+          )}
+          {announcements?.map((a) => (
+            <div
+              key={a._id}
+              className={`flex items-center justify-between py-2 px-3 rounded-lg border transition-all ${
+                a.isActive ? "border-zinc-200" : "border-zinc-100 opacity-60"
+              }`}
+            >
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <button
+                  onClick={() => handleToggle(a)}
+                  className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors shrink-0 ${
+                    a.isActive ? "bg-green-500 border-green-500" : "border-zinc-300"
+                  }`}
+                  title={a.isActive ? "Deactivate" : "Activate"}
+                >
+                  {a.isActive && <span className="text-white text-[10px]">✓</span>}
+                </button>
+                <div className="rounded px-2 py-1 text-xs font-medium truncate" style={{ backgroundColor: a.bgColor, color: a.textColor }}>
+                  {a.text}
+                </div>
+              </div>
+              <div className="flex items-center gap-1 shrink-0 ml-2">
+                <button
+                  onClick={() => handleEdit(a)}
+                  className="p-1 text-zinc-400 hover:text-zinc-600"
+                  title="Edit"
+                >
+                  <Pencil size={14} />
+                </button>
+                <button
+                  onClick={() => { if (confirm("Delete this announcement?")) removeAnnouncement({ id: a._id }); }}
+                  className="p-1 text-zinc-400 hover:text-red-500"
+                  title="Delete"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

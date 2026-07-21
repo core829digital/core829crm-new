@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { AuthProvider, useAuth } from "./AuthContext";
 import Navigation from "./Navigation";
+import AnnouncementBanner from "./AnnouncementBanner";
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -26,6 +27,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Navigation />
+      <AnnouncementBanner />
       <main className="mx-auto px-4 py-6">{children}</main>
     </>
   );
