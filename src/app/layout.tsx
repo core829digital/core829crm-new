@@ -7,8 +7,6 @@ export const metadata: Metadata = {
   title: "Core829 CRM",
   description: "Sales Tracker CRM for setters and closers",
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
     apple: "/logo-icon.png",
   },
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Core829 CRM" },
