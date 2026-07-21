@@ -26,7 +26,7 @@ export default function AnnouncementBanner() {
       className="w-full overflow-hidden border-b border-zinc-800 relative"
       style={{ backgroundColor: announcements[0]?.bgColor || "#18181b" }}
     >
-      <div className="max-w-7xl mx-auto flex items-center h-9 relative">
+      <div className="w-full flex items-center h-9 relative">
         <div className="flex items-center gap-1.5 px-3 h-full shrink-0 z-10" style={{ backgroundColor: announcements[0]?.bgColor || "#18181b" }}>
           <Megaphone size={14} className="shrink-0" style={{ color: announcements[0]?.textColor || "#fff" }} />
         </div>
