@@ -32,7 +32,7 @@ export default function AnnouncementBanner() {
         </div>
         <div className="overflow-hidden flex-1">
           <div
-            className="flex gap-16 whitespace-nowrap"
+            className="flex whitespace-nowrap"
             style={{
               animation: `scrollBanner ${duration}s linear infinite`,
             }}
@@ -40,7 +40,7 @@ export default function AnnouncementBanner() {
             {items.map((a, i) => (
               <span
                 key={`${a._id}-${i}`}
-                className="text-xs font-medium leading-9"
+                className="text-xs font-medium leading-9 mr-16"
                 style={{ color: announcements[0]?.textColor || "#fff" }}
               >
                 {a.text}
