@@ -14,7 +14,8 @@ export default function AnnouncementBanner() {
   useEffect(() => {
     const el = trackRef.current;
     if (!el || !announcements || announcements.length === 0) return;
-    let pos = 0;
+    const container = el.parentElement;
+    let pos = container?.offsetWidth || 0;
     let running = true;
 
     const step = () => {
