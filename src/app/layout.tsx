@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import ConvexWrapper from "@/components/ConvexWrapper";
-import Navigation from "@/components/Navigation";
+import AppShell from "@/components/AppShell";
 
 export const metadata: Metadata = {
   title: "Core829 CRM",
@@ -31,8 +31,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="min-h-screen bg-[#fafafa]">
         <ConvexWrapper>
-          <Navigation />
-          <main className="mx-auto px-4 py-6">{children}</main>
+          <AppShell>{children}</AppShell>
         </ConvexWrapper>
       </body>
     </html>

@@ -127,4 +127,24 @@ export default defineSchema({
     notes: v.optional(v.string()),
     createdAt: v.string(),
   }).index("by_projectId", ["projectId"]),
+
+  users: defineTable({
+    userId: v.string(),
+    name: v.string(),
+    surname: v.string(),
+    passwordHash: v.string(),
+    salt: v.string(),
+    role: v.string(),
+    createdBy: v.optional(v.string()),
+    createdAt: v.string(),
+  }).index("by_userId", ["userId"]),
+
+  activityLogs: defineTable({
+    userId: v.string(),
+    userName: v.string(),
+    action: v.string(),
+    details: v.optional(v.string()),
+    timestamp: v.string(),
+  }).index("by_userId", ["userId"])
+    .index("by_timestamp", ["timestamp"]),
 });
