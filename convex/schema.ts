@@ -159,6 +159,18 @@ export default defineSchema({
   }).index("by_userId", ["userId"])
     .index("by_all", ["createdAt"]),
 
+  services: defineTable({
+    clientId: v.id("clients"),
+    category: v.string(),
+    serviceName: v.string(),
+    description: v.optional(v.string()),
+    quoteAmount: v.number(),
+    quoteFileId: v.optional(v.id("_storage")),
+    quoteFileName: v.optional(v.string()),
+    status: v.string(),
+    createdAt: v.string(),
+  }).index("by_clientId", ["clientId"]),
+
   announcements: defineTable({
     text: v.string(),
     bgColor: v.string(),

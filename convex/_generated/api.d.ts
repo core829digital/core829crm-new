@@ -21,6 +21,7 @@ import type * as notify from "../notify.js";
 import type * as projects from "../projects.js";
 import type * as revenueGoal from "../revenueGoal.js";
 import type * as seed from "../seed.js";
+import type * as services from "../services.js";
 import type * as users from "../users.js";
 
 import type {
@@ -43,6 +44,7 @@ declare const fullApi: ApiFromModules<{
   projects: typeof projects;
   revenueGoal: typeof revenueGoal;
   seed: typeof seed;
+  services: typeof services;
   users: typeof users;
 }>;
 

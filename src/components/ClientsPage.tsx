@@ -17,12 +17,16 @@ import {
   Loader2,
   Download,
   Eye,
+  Check,
+  XCircle,
+  Briefcase,
 } from "lucide-react";
 
 type ModalState =
   | { type: "client" }
   | { type: "project"; clientId: Id<"clients"> }
   | { type: "invoice"; projectId: Id<"projects"> }
+  | { type: "service"; clientId: Id<"clients"> }
   | { type: null };
 
 export default function ClientsPage() {
@@ -132,9 +136,19 @@ export default function ClientsPage() {
               updateProject={updateProject}
               removeProject={removeProject}
               onAddInvoice={(projectId) => setModal({ type: "invoice", projectId })}
+              onAddService={() => {
+                setModal({ type: "service", clientId: client._id });
+              }}
             />
           ))}
         </div>
+      )}
+
+      {modal.type === "service" && (
+        <ServiceModal
+          clientId={modal.clientId}
+          onClose={() => setModal({ type: null })}
+        />
       )}
 
       {modal.type === "client" && (
@@ -241,6 +255,7 @@ function ClientCard({
   client, expanded, onToggle, expandedProject, onToggleProject,
   onAddProject, onAddTask,
   toggleTask, removeTask, updateProject, removeProject, onAddInvoice,
+  onAddService,
 }: {
   client: { _id: Id<"clients">; clientName: string; company: string; email: string; phone: string; createdAt: string };
   expanded: boolean;
@@ -254,6 +269,7 @@ function ClientCard({
   updateProject: ReturnType<typeof useMutation<typeof api.projects.update>>;
   removeProject: ReturnType<typeof useMutation<typeof api.projects.remove>>;
   onAddInvoice: (projectId: Id<"projects">) => void;
+  onAddService: () => void;
 }) {
   const projects = useQuery(api.projects.getByClientId, { clientId: client._id });
 
@@ -327,9 +343,298 @@ function ClientCard({
               ))}
             </div>
           )}
+
+          <div className="border-t border-zinc-100 pt-4 mt-2">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-medium text-sm text-zinc-500 uppercase tracking-wider">Services & Quotes</h3>
+              <button
+                onClick={onAddService}
+                className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700 font-medium"
+              >
+                <Plus size={14} /> Add Service
+              </button>
+            </div>
+            <ServicesList clientId={client._id} />
+          </div>
         </div>
       )}
     </div>
+  );
+}
+
+function ServicesList({ clientId }: { clientId: Id<"clients"> }) {
+  const services = useQuery(api.services.listByClient, { clientId });
+  const updateStatus = useMutation(api.services.updateStatus);
+  const removeService = useMutation(api.services.remove);
+
+  const [viewQuote, setViewQuote] = useState<{ storageId: Id<"_storage">; fileName: string } | null>(null);
+
+  if (!services) return <div className="text-sm text-zinc-400">Loading...</div>;
+
+  if (services.length === 0) {
+    return <p className="text-sm text-zinc-400 text-center py-4">No services added yet</p>;
+  }
+
+  return (
+    <div className="space-y-2">
+      {services.map((s) => (
+        <ServiceRow
+          key={s._id}
+          service={s}
+          onAccept={() => updateStatus({ id: s._id, status: "Accepted" })}
+          onDecline={() => updateStatus({ id: s._id, status: "Declined" })}
+          onRemove={() => { if (confirm("Remove this service?")) removeService({ id: s._id }); }}
+                  onViewQuote={() => setViewQuote({ storageId: s.quoteFileId!, fileName: s.quoteFileName || "Quote.pdf" })}
+        />
+      ))}
+      {viewQuote && (
+        <PdfPreviewModal
+          storageId={viewQuote.storageId}
+          fileName={viewQuote.fileName}
+          onClose={() => setViewQuote(null)}
+          onDownload={() => {}}
+        />
+      )}
+    </div>
+  );
+}
+
+function ServiceRow({
+  service, onAccept, onDecline, onRemove, onViewQuote,
+}: {
+  service: {
+    _id: Id<"services">;
+    category: string;
+    serviceName: string;
+    description?: string;
+    quoteAmount: number;
+    quoteFileId?: Id<"_storage">;
+    quoteFileName?: string;
+    status: string;
+  };
+  onAccept: () => void;
+  onDecline: () => void;
+  onRemove: () => void;
+  onViewQuote: () => void;
+}) {
+  const quoteUrl = useQuery(
+    api.services.getFileUrl,
+    service.quoteFileId ? { storageId: service.quoteFileId } : "skip"
+  );
+
+  return (
+    <div className="border border-zinc-200 rounded-lg p-3 flex items-start justify-between gap-3">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <Briefcase size={14} className="text-zinc-400 shrink-0" />
+          <span className="text-sm font-medium truncate">{service.serviceName}</span>
+          <span className="text-[10px] text-zinc-400 bg-zinc-100 px-1.5 py-0.5 rounded">
+            {service.category}
+          </span>
+        </div>
+        {service.description && (
+          <p className="text-xs text-zinc-500 mt-1">{service.description}</p>
+        )}
+        <div className="flex items-center gap-3 mt-1.5">
+          <span className="text-sm font-semibold">${service.quoteAmount.toLocaleString()}</span>
+          <StatusBadge status={service.status} />
+        </div>
+      </div>
+      <div className="flex items-center gap-1 shrink-0">
+        {quoteUrl && (
+          <button
+            onClick={() => { onViewQuote(); }}
+            className="p-1.5 text-zinc-400 hover:text-zinc-600 rounded-md transition-colors"
+            title="View Quote"
+          >
+            <Eye size={15} />
+          </button>
+        )}
+        {service.status === "Pending" && (
+          <>
+            <button
+              onClick={onAccept}
+              className="p-1.5 text-green-600 hover:bg-green-50 rounded-md transition-colors"
+              title="Accept"
+            >
+              <Check size={15} />
+            </button>
+            <button
+              onClick={onDecline}
+              className="p-1.5 text-red-500 hover:bg-red-50 rounded-md transition-colors"
+              title="Decline"
+            >
+              <XCircle size={15} />
+            </button>
+          </>
+        )}
+        <button
+          onClick={onRemove}
+          className="p-1.5 text-zinc-400 hover:text-red-500 rounded-md transition-colors"
+          title="Remove"
+        >
+          <Trash2 size={14} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const colors: Record<string, string> = {
+    Pending: "bg-amber-100 text-amber-700",
+    Accepted: "bg-green-100 text-green-700",
+    Declined: "bg-red-100 text-red-700",
+  };
+  return (
+    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${colors[status] || "bg-zinc-100 text-zinc-500"}`}>
+      {status}
+    </span>
+  );
+}
+
+function ServiceModal({ clientId, onClose }: { clientId: Id<"clients">; onClose: () => void }) {
+  const generateUploadUrl = useMutation(api.services.generateUploadUrl);
+  const createService = useMutation(api.services.create);
+
+  const [category, setCategory] = useState("Software Development");
+  const [serviceName, setServiceName] = useState("");
+  const [description, setDescription] = useState("");
+  const [quoteAmount, setQuoteAmount] = useState(0);
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const serviceOptions: Record<string, string[]> = {
+    "Software Development": [
+      "Web Application", "Mobile App (iOS)", "Mobile App (Android)",
+      "API Development", "Database Design & Architecture",
+      "Cloud Migration & Infrastructure", "DevOps & CI/CD Setup",
+      "Code Audit & Refactoring", "UI/UX Design & Prototyping",
+      "E-commerce Platform", "CMS Development", "Custom CRM Development",
+      "SaaS Platform Development", "Blockchain / DLT Solution",
+      "Smart Contract Development", "QA & Automated Testing",
+      "Security Audit & Penetration Testing",
+      "Legacy System Migration", "Microservices Architecture",
+      "Real-time System (WebSocket/SSE)",
+    ],
+    "Marketing Services": [
+      "SEO Optimization", "PPC Campaign Management",
+      "Social Media Management", "Content Marketing Strategy",
+      "Email Marketing & Automation", "Brand Strategy & Identity",
+      "Market Research & Analysis", "Conversion Rate Optimization",
+      "Marketing Automation Setup", "Influencer Marketing",
+      "Video Production & Editing", "Copywriting & Content Creation",
+      "PR & Communications", "Analytics & Reporting Dashboard",
+      "Growth Strategy Consulting",
+    ],
+    "AI Services": [
+      "Custom AI Model Development", "Chatbot / Conversational AI",
+      "Data Pipeline & ETL Engineering", "NLP / Text Analytics Solution",
+      "Computer Vision System", "RAG (Retrieval Augmented Generation)",
+      "AI Consulting & Strategy", "ML Ops & Model Deployment",
+      "Predictive Analytics Engine", "Recommendation System",
+      "Document Intelligence (OCR/Extraction)",
+      "Voice AI / Speech Recognition",
+    ],
+  };
+
+  const currentServices = serviceOptions[category] ?? [];
+
+  const handleSubmit = async () => {
+    if (!serviceName || quoteAmount <= 0) return;
+    setUploading(true);
+    try {
+      let quoteFileId: Id<"_storage"> | undefined;
+      let quoteFileName: string | undefined;
+      if (file) {
+        const uploadUrl = await generateUploadUrl();
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await fetch(uploadUrl, { method: "POST", body: formData });
+        const result = await res.json();
+        quoteFileId = result.storageId;
+        quoteFileName = file.name;
+      }
+      await createService({
+        clientId,
+        category,
+        serviceName,
+        description: description || undefined,
+        quoteAmount,
+        quoteFileId,
+        quoteFileName,
+      });
+      onClose();
+    } catch (err) {
+      console.error("Upload failed", err);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <Modal onClose={onClose} title="Add Service / Quote">
+      <div className="space-y-3">
+        <select
+          className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm"
+          value={category}
+          onChange={(e) => { setCategory(e.target.value); setServiceName(""); }}
+        >
+          <option>Software Development</option>
+          <option>Marketing Services</option>
+          <option>AI Services</option>
+        </select>
+
+        <select
+          className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm"
+          value={serviceName}
+          onChange={(e) => setServiceName(e.target.value)}
+        >
+          <option value="">Select a service...</option>
+          {currentServices.map((s: string) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+
+        <textarea
+          placeholder="Description (optional)"
+          className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm"
+          rows={2}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+
+        <input
+          type="number"
+          placeholder="Quote Amount *"
+          className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm"
+          value={quoteAmount || ""}
+          onChange={(e) => setQuoteAmount(Number(e.target.value))}
+        />
+
+        <label className="flex items-center gap-2 border border-zinc-300 rounded-lg px-3 py-2 text-sm cursor-pointer hover:bg-zinc-50">
+          <Upload size={16} className="text-zinc-400" />
+          <span className={file ? "text-zinc-800" : "text-zinc-400"}>
+            {file ? file.name : "Upload Quote PDF"}
+          </span>
+          <input
+            type="file"
+            accept=".pdf,application/pdf"
+            className="hidden"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
+          />
+        </label>
+
+        <button
+          onClick={handleSubmit}
+          disabled={uploading || !serviceName || quoteAmount <= 0}
+          className="w-full bg-black text-white py-2 rounded-lg text-sm font-medium hover:bg-zinc-800 disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          {uploading ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+          {uploading ? "Uploading..." : "Add Service"}
+        </button>
+      </div>
+    </Modal>
   );
 }
 
@@ -769,36 +1074,44 @@ function InvoiceModal({ projectId, onClose }: { projectId: Id<"projects">; onClo
   );
 }
 
-function PdfPreviewModal({ fileUrl, fileName, onClose, onDownload }: {
-  fileUrl: string;
+function PdfPreviewModal({ fileUrl, fileName, onClose, onDownload, storageId }: {
+  fileUrl?: string;
   fileName: string;
   onClose: () => void;
   onDownload: () => void;
+  storageId?: Id<"_storage">;
 }) {
+  const resolvedUrl = useQuery(
+    api.services.getFileUrl,
+    storageId ? { storageId } : "skip"
+  );
   const [localUrl, setLocalUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const src = storageId ? resolvedUrl : fileUrl;
 
   useEffect(() => {
+    if (!src) return;
     let cancelled = false;
-    fetch(fileUrl)
+    fetch(src)
       .then((res) => res.blob())
       .then((blob) => {
         if (!cancelled) {
-          setLocalUrl(URL.createObjectURL(blob));
+          const url = URL.createObjectURL(blob);
+          setLocalUrl(url);
           setLoading(false);
         }
       })
       .catch(() => setLoading(false));
     return () => { cancelled = true; };
-  }, [fileUrl]);
+  }, [src]);
 
   useEffect(() => {
     return () => { if (localUrl) URL.revokeObjectURL(localUrl); };
   }, [localUrl]);
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-2 sm:p-4">
-      <div className="bg-white rounded-xl w-full max-w-5xl h-[90vh] flex flex-col shadow-2xl">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[60] p-0">
+      <div className="bg-white w-full h-full flex flex-col shadow-2xl">
         <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-zinc-200 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             <FileText size={18} className="text-red-500 shrink-0" />
@@ -817,17 +1130,21 @@ function PdfPreviewModal({ fileUrl, fileName, onClose, onDownload }: {
             </button>
           </div>
         </div>
-        <div className="flex-1 bg-zinc-100 rounded-b-xl overflow-hidden flex items-center justify-center">
+        <div className="flex-1 bg-zinc-100 overflow-hidden">
           {loading ? (
-            <Loader2 size={32} className="animate-spin text-zinc-400" />
+            <div className="h-full flex items-center justify-center">
+              <Loader2 size={32} className="animate-spin text-zinc-400" />
+            </div>
           ) : localUrl ? (
-            <embed
+            <iframe
               src={localUrl}
-              type="application/pdf"
-              className="w-full h-full"
+              className="w-full h-full border-0"
+              title={fileName}
             />
           ) : (
-            <p className="text-sm text-zinc-400">Failed to load PDF</p>
+            <div className="h-full flex items-center justify-center">
+              <p className="text-sm text-zinc-400">Failed to load PDF</p>
+            </div>
           )}
         </div>
       </div>
