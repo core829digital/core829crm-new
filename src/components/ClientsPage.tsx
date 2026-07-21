@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
@@ -13,9 +13,10 @@ import {
   Trash2,
   Upload,
   FileText,
-  ExternalLink,
   X,
   Loader2,
+  Download,
+  Eye,
 } from "lucide-react";
 
 type ModalState =
@@ -542,6 +543,9 @@ function InvoiceRow({ invoice }: {
   const updateInvoice = useMutation(api.invoices.update);
   const removeInvoice = useMutation(api.invoices.remove);
 
+  const [showPdf, setShowPdf] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+
   const statusColor: Record<string, string> = {
     Pending: "bg-amber-100 text-amber-700",
     Paid: "bg-green-100 text-green-700",
@@ -551,55 +555,95 @@ function InvoiceRow({ invoice }: {
 
   const [editingStatus, setEditingStatus] = useState(false);
 
+  const handleDownload = async () => {
+    if (!fileUrl) return;
+    setDownloading(true);
+    try {
+      const res = await fetch(fileUrl);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = invoice.fileName || `invoice-${invoice.invoiceNumber}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Download failed", err);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
-    <div className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-zinc-50 group">
-      <div className="flex items-center gap-2 min-w-0">
-        <FileText size={14} className="text-zinc-400 shrink-0" />
-        <span className="text-sm font-medium truncate">{invoice.invoiceNumber}</span>
-        <span className="text-sm text-zinc-500">${invoice.amount.toLocaleString()}</span>
-        {editingStatus ? (
-          <select
-            className="text-[11px] border rounded px-1 py-0.5"
-            value={invoice.status}
-            onChange={(e) => { updateInvoice({ id: invoice._id, status: e.target.value }); setEditingStatus(false); }}
-            autoFocus
-            onBlur={() => setEditingStatus(false)}
-          >
-            <option>Pending</option>
-            <option>Paid</option>
-            <option>Overdue</option>
-            <option>Cancelled</option>
-          </select>
-        ) : (
+    <>
+      <div className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-zinc-50 group">
+        <div className="flex items-center gap-2 min-w-0">
+          <FileText size={14} className="text-zinc-400 shrink-0" />
+          <span className="text-sm font-medium truncate">{invoice.invoiceNumber}</span>
+          <span className="text-sm text-zinc-500">${invoice.amount.toLocaleString()}</span>
+          {editingStatus ? (
+            <select
+              className="text-[11px] border rounded px-1 py-0.5"
+              value={invoice.status}
+              onChange={(e) => { updateInvoice({ id: invoice._id, status: e.target.value }); setEditingStatus(false); }}
+              autoFocus
+              onBlur={() => setEditingStatus(false)}
+            >
+              <option>Pending</option>
+              <option>Paid</option>
+              <option>Overdue</option>
+              <option>Cancelled</option>
+            </select>
+          ) : (
+            <button
+              onClick={(e) => { e.stopPropagation(); setEditingStatus(true); }}
+              className={`text-[11px] font-medium px-1.5 py-0.5 rounded-full ${statusColor[invoice.status] || "bg-zinc-100 text-zinc-600"}`}
+            >
+              {invoice.status}
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+          {fileUrl && (
+            <>
+              <button
+                onClick={() => setShowPdf(true)}
+                className="p-1 text-zinc-400 hover:text-zinc-600"
+                title="View PDF"
+              >
+                <Eye size={14} />
+              </button>
+              <button
+                onClick={handleDownload}
+                disabled={downloading}
+                className="p-1 text-zinc-400 hover:text-zinc-600"
+                title="Download PDF"
+              >
+                {downloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+              </button>
+            </>
+          )}
           <button
-            onClick={(e) => { e.stopPropagation(); setEditingStatus(true); }}
-            className={`text-[11px] font-medium px-1.5 py-0.5 rounded-full ${statusColor[invoice.status] || "bg-zinc-100 text-zinc-600"}`}
+            onClick={() => { if (confirm("Delete this invoice?")) removeInvoice({ id: invoice._id }); }}
+            className="p-1 text-zinc-400 hover:text-red-500"
+            title="Delete"
           >
-            {invoice.status}
+            <Trash2 size={14} />
           </button>
-        )}
+        </div>
       </div>
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-        {fileUrl && (
-          <a
-            href={fileUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-1 text-zinc-400 hover:text-zinc-600"
-            title="View PDF"
-          >
-            <ExternalLink size={14} />
-          </a>
-        )}
-        <button
-          onClick={() => { if (confirm("Delete this invoice?")) removeInvoice({ id: invoice._id }); }}
-          className="p-1 text-zinc-400 hover:text-red-500"
-          title="Delete"
-        >
-          <Trash2 size={14} />
-        </button>
-      </div>
-    </div>
+
+      {showPdf && fileUrl && (
+        <PdfPreviewModal
+          fileUrl={fileUrl}
+          fileName={invoice.fileName || `invoice-${invoice.invoiceNumber}.pdf`}
+          onClose={() => setShowPdf(false)}
+          onDownload={handleDownload}
+        />
+      )}
+    </>
   );
 }
 
@@ -722,6 +766,73 @@ function InvoiceModal({ projectId, onClose }: { projectId: Id<"projects">; onClo
         </button>
       </div>
     </Modal>
+  );
+}
+
+function PdfPreviewModal({ fileUrl, fileName, onClose, onDownload }: {
+  fileUrl: string;
+  fileName: string;
+  onClose: () => void;
+  onDownload: () => void;
+}) {
+  const [localUrl, setLocalUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    fetch(fileUrl)
+      .then((res) => res.blob())
+      .then((blob) => {
+        if (!cancelled) {
+          setLocalUrl(URL.createObjectURL(blob));
+          setLoading(false);
+        }
+      })
+      .catch(() => setLoading(false));
+    return () => { cancelled = true; };
+  }, [fileUrl]);
+
+  useEffect(() => {
+    return () => { if (localUrl) URL.revokeObjectURL(localUrl); };
+  }, [localUrl]);
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-2 sm:p-4">
+      <div className="bg-white rounded-xl w-full max-w-5xl h-[90vh] flex flex-col shadow-2xl">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-zinc-200 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <FileText size={18} className="text-red-500 shrink-0" />
+            <span className="font-medium text-sm truncate">{fileName}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onDownload}
+              className="flex items-center gap-1.5 text-xs bg-black text-white px-3 py-1.5 rounded-lg hover:bg-zinc-800 transition-colors"
+            >
+              <Download size={14} />
+              Download
+            </button>
+            <button onClick={onClose} className="p-1.5 text-zinc-400 hover:text-zinc-600 rounded-lg hover:bg-zinc-100 transition-colors">
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+        <div className="flex-1 bg-zinc-100 rounded-b-xl overflow-hidden flex items-center justify-center">
+          {loading ? (
+            <Loader2 size={32} className="animate-spin text-zinc-400" />
+          ) : localUrl ? (
+            <embed
+              src={localUrl}
+              type="application/pdf"
+              className="w-full h-full"
+            />
+          ) : (
+            <p className="text-sm text-zinc-400">Failed to load PDF</p>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
