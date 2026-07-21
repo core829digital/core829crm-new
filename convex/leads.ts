@@ -86,6 +86,34 @@ export const update = mutation({
       ((commissionPercent as number) / 100);
 
     await ctx.db.patch(id, updates);
+
+    if (updates.leadStatus === "Won" && existing.leadStatus !== "Won") {
+      const existingClient = await ctx.db
+        .query("clients")
+        .withIndex("by_leadId", (q) => q.eq("leadId", id))
+        .first();
+
+      if (!existingClient) {
+        const clientId = await ctx.db.insert("clients", {
+          leadId: id,
+          clientName: existing.leadName,
+          company: existing.company,
+          email: existing.email,
+          phone: existing.phone,
+          createdAt: new Date().toISOString(),
+        });
+
+        await ctx.db.insert("projects", {
+          clientId,
+          projectName: `${existing.company} - Initial Deal`,
+          description: "Project created from won deal",
+          status: "Active",
+          startDate: new Date().toISOString(),
+          totalValue: existing.totalDealValue,
+          createdAt: new Date().toISOString(),
+        });
+      }
+    }
   },
 });
 

@@ -29,6 +29,20 @@ export const lossReasons = [
   "Not Qualified",
 ] as const;
 
+export const projectStatuses = [
+  "Active",
+  "On-Hold",
+  "Completed",
+  "Cancelled",
+] as const;
+
+export const invoiceStatuses = [
+  "Pending",
+  "Paid",
+  "Overdue",
+  "Cancelled",
+] as const;
+
 export default defineSchema({
   leads: defineTable({
     leadName: v.string(),
@@ -74,4 +88,43 @@ export default defineSchema({
     monthlyGoal: v.number(),
     month: v.string(),
   }).index("by_month", ["month"]),
+
+  clients: defineTable({
+    leadId: v.optional(v.id("leads")),
+    clientName: v.string(),
+    company: v.string(),
+    email: v.string(),
+    phone: v.string(),
+    createdAt: v.string(),
+  }).index("by_leadId", ["leadId"]),
+
+  projects: defineTable({
+    clientId: v.id("clients"),
+    projectName: v.string(),
+    description: v.string(),
+    status: v.string(),
+    startDate: v.string(),
+    deadline: v.optional(v.string()),
+    totalValue: v.number(),
+    notes: v.optional(v.string()),
+    createdAt: v.string(),
+  }).index("by_clientId", ["clientId"]),
+
+  projectTasks: defineTable({
+    projectId: v.id("projects"),
+    taskName: v.string(),
+    completed: v.boolean(),
+    createdAt: v.string(),
+  }).index("by_projectId", ["projectId"]),
+
+  invoices: defineTable({
+    projectId: v.id("projects"),
+    invoiceNumber: v.string(),
+    amount: v.number(),
+    status: v.string(),
+    fileId: v.optional(v.id("_storage")),
+    fileName: v.optional(v.string()),
+    notes: v.optional(v.string()),
+    createdAt: v.string(),
+  }).index("by_projectId", ["projectId"]),
 });
