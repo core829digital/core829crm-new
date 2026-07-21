@@ -37,7 +37,9 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 p-8">
           <div className="flex justify-center mb-6">
-            <Image src="/logo-icon.png" alt="Core829" width={48} height={48} priority />
+            <div className="bg-black rounded-full p-3">
+              <Image src="/logo-icon.png" alt="Core829" width={32} height={32} priority />
+            </div>
           </div>
           <h1 className="text-xl font-bold text-center mb-1">Core829 CRM</h1>
           <p className="text-sm text-zinc-400 text-center mb-6">Sign in with your credentials</p>
