@@ -33,6 +33,7 @@ export default function ClientsPage() {
   const addTask = useMutation(api.projects.addTask);
   const toggleTask = useMutation(api.projects.toggleTask);
   const removeTask = useMutation(api.projects.removeTask);
+  const backfill = useMutation(api.migrations.backfillClientsFromWonLeads);
 
   const [expandedClient, setExpandedClient] = useState<Id<"clients"> | null>(null);
   const [expandedProject, setExpandedProject] = useState<Id<"projects"> | null>(null);
@@ -98,10 +99,17 @@ export default function ClientsPage() {
         </button>
       </div>
 
+      <div className="mb-4 flex justify-end">
+        <BackfillButton onBackfill={backfill} />
+      </div>
+
       {clients.length === 0 ? (
         <div className="text-center py-20 text-gray-400">
           <p className="text-lg">No clients yet.</p>
           <p className="text-sm mt-1">Clients are automatically created when a lead is marked as Won.</p>
+          <div className="mt-4 flex justify-center">
+            <BackfillButton onBackfill={backfill} />
+          </div>
         </div>
       ) : (
         <div className="space-y-3">
@@ -714,5 +722,43 @@ function InvoiceModal({ projectId, onClose }: { projectId: Id<"projects">; onClo
         </button>
       </div>
     </Modal>
+  );
+}
+
+function BackfillButton({ onBackfill }: { onBackfill: ReturnType<typeof useMutation<typeof api.migrations.backfillClientsFromWonLeads>> }) {
+  const [running, setRunning] = useState(false);
+  const [result, setResult] = useState<{ created: number; skipped: number; totalWon: number } | null>(null);
+
+  const handleClick = async () => {
+    setRunning(true);
+    setResult(null);
+    try {
+      const res = await onBackfill();
+      setResult(res);
+    } catch (e) {
+      console.error(e);
+      alert("Backfill failed. Check console.");
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-3">
+      {result && (
+        <span className="text-xs text-green-600">
+          Created {result.created} client{result.created !== 1 ? "s" : ""}
+          {result.skipped > 0 ? ` (${result.skipped} already existed)` : ""}
+        </span>
+      )}
+      <button
+        onClick={handleClick}
+        disabled={running}
+        className="flex items-center gap-1.5 text-xs text-zinc-500 border border-zinc-300 px-3 py-1.5 rounded-lg hover:bg-zinc-50 disabled:opacity-50"
+      >
+        {running ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+        {running ? "Syncing..." : "Sync Won Leads"}
+      </button>
+    </div>
   );
 }
