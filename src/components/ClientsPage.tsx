@@ -1074,11 +1074,11 @@ function InvoiceModal({ projectId, onClose }: { projectId: Id<"projects">; onClo
   );
 }
 
-function PdfPreviewModal({ fileUrl, fileName, onClose, onDownload, storageId }: {
+function PdfPreviewModal({ fileUrl, fileName, onClose, storageId, onDownload: _od }: {
   fileUrl?: string;
   fileName: string;
   onClose: () => void;
-  onDownload: () => void;
+  onDownload?: () => void;
   storageId?: Id<"_storage">;
 }) {
   const resolvedUrl = useQuery(
@@ -1086,13 +1086,12 @@ function PdfPreviewModal({ fileUrl, fileName, onClose, onDownload, storageId }: 
     storageId ? { storageId } : "skip"
   );
   const srcUrl = storageId ? resolvedUrl : fileUrl;
-  const [loadError, setLoadError] = useState(false);
   const [downloading, setDownloading] = useState(false);
-  const [iframeReady, setIframeReady] = useState(false);
+  const [notLoaded, setNotLoaded] = useState(false);
 
   useEffect(() => {
-    setLoadError(false);
-    setIframeReady(false);
+    const t = setTimeout(() => setNotLoaded(true), 8000);
+    return () => clearTimeout(t);
   }, [srcUrl]);
 
   const handleDownload = async () => {
@@ -1103,10 +1102,8 @@ function PdfPreviewModal({ fileUrl, fileName, onClose, onDownload, storageId }: 
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
+      a.href = url; a.download = fileName;
+      document.body.appendChild(a); a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch {
@@ -1121,7 +1118,7 @@ function PdfPreviewModal({ fileUrl, fileName, onClose, onDownload, storageId }: 
       <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[60] p-0" onClick={onClose}>
         <div className="bg-white rounded-xl p-6 text-center" onClick={(e) => e.stopPropagation()}>
           <Loader2 size={24} className="animate-spin text-zinc-400 mx-auto" />
-          <p className="text-sm text-zinc-400 mt-2">Loading file...</p>
+          <p className="text-sm text-zinc-400 mt-2">Resolving file URL...</p>
         </div>
       </div>
     );
@@ -1144,37 +1141,45 @@ function PdfPreviewModal({ fileUrl, fileName, onClose, onDownload, storageId }: 
               {downloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
               Download
             </button>
+            <button
+              onClick={() => srcUrl && window.open(srcUrl, "_blank")}
+              className="flex items-center gap-1.5 text-xs border border-zinc-300 px-3 py-1.5 rounded-lg hover:bg-zinc-50 transition-colors"
+            >
+              Open in new tab
+            </button>
             <button onClick={onClose} className="p-1.5 text-zinc-400 hover:text-zinc-600 rounded-lg hover:bg-zinc-100 transition-colors">
               <X size={18} />
             </button>
           </div>
         </div>
-        <div className="flex-1 bg-zinc-100 overflow-hidden relative">
-          {!iframeReady && !loadError && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="flex flex-col items-center gap-2">
-                <Loader2 size={32} className="animate-spin text-zinc-400" />
-                <span className="text-sm text-zinc-400">Loading PDF...</span>
-              </div>
-            </div>
-          )}
-          {loadError ? (
-            <div className="h-full flex items-center justify-center flex-col gap-3">
+        <div className="flex-1 bg-zinc-100 overflow-hidden flex items-center justify-center">
+          {notLoaded ? (
+            <div className="flex flex-col items-center gap-3 text-center px-4">
               <FileText size={48} className="text-zinc-300" />
-              <p className="text-sm text-zinc-500">Could not load preview</p>
-              <button
-                onClick={() => srcUrl && window.open(srcUrl, "_blank")}
-                className="bg-black text-white px-4 py-2 rounded-lg text-sm hover:bg-zinc-800 transition-colors"
-              >
-                Open PDF in new tab
-              </button>
+              <p className="text-sm text-zinc-500">
+                Browser cannot preview this file inline.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => srcUrl && window.open(srcUrl, "_blank")}
+                  className="bg-black text-white px-4 py-2 rounded-lg text-sm hover:bg-zinc-800 transition-colors"
+                >
+                  Open in new tab
+                </button>
+                <button
+                  onClick={handleDownload}
+                  disabled={downloading}
+                  className="border border-zinc-300 px-4 py-2 rounded-lg text-sm hover:bg-zinc-50 transition-colors"
+                >
+                  {downloading ? <Loader2 size={14} className="animate-spin" /> : "Download"}
+                </button>
+              </div>
             </div>
           ) : (
             <iframe
               src={srcUrl}
               className="w-full h-full border-0"
               title={fileName}
-              onLoad={() => setIframeReady(true)}
             />
           )}
         </div>
