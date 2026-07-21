@@ -1,6 +1,8 @@
 "use client";
 
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+
+const SESSION_DURATION = 3 * 60 * 60 * 1000; // 3 hours
 
 export type AuthUser = {
   _id: string;
@@ -8,6 +10,11 @@ export type AuthUser = {
   name: string;
   surname: string;
   role: string;
+};
+
+type AuthSession = {
+  user: AuthUser;
+  loggedInAt: number;
 };
 
 type AuthContextType = {
@@ -20,26 +27,61 @@ const AuthContext = createContext<AuthContextType>({
   setUser: () => {},
 });
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(() => {
-    if (typeof window === "undefined") return null;
-    try {
-      const stored = localStorage.getItem("crm_user");
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      if (typeof window !== "undefined") localStorage.removeItem("crm_user");
+function getSession(): AuthSession | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem("crm_user");
+    if (!raw) return null;
+    const session: AuthSession = JSON.parse(raw);
+    if (!session.user || !session.loggedInAt) {
+      localStorage.removeItem("crm_user");
       return null;
     }
+    if (Date.now() - session.loggedInAt > SESSION_DURATION) {
+      localStorage.removeItem("crm_user");
+      return null;
+    }
+    return session;
+  } catch {
+    localStorage.removeItem("crm_user");
+    return null;
+  }
+}
+
+function saveSession(user: AuthUser) {
+  const session: AuthSession = { user, loggedInAt: Date.now() };
+  localStorage.setItem("crm_user", JSON.stringify(session));
+}
+
+function clearSession() {
+  localStorage.removeItem("crm_user");
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<AuthUser | null>(() => {
+    const session = getSession();
+    return session ? session.user : null;
   });
 
   const handleSetUser = (u: AuthUser | null) => {
     setUser(u);
     if (u) {
-      localStorage.setItem("crm_user", JSON.stringify(u));
+      saveSession(u);
     } else {
-      localStorage.removeItem("crm_user");
+      clearSession();
     }
   };
+
+  useEffect(() => {
+    if (!user) return;
+    const id = setInterval(() => {
+      const session = getSession();
+      if (!session) {
+        setUser(null);
+      }
+    }, 30_000);
+    return () => clearInterval(id);
+  }, [user]);
 
   return (
     <AuthContext.Provider value={{ user, setUser: handleSetUser }}>
