@@ -14,7 +14,6 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const login = useMutation(api.users.login);
-  const seedAdmin = useMutation(api.seed.seedAdmin);
   const { setUser } = useAuth();
   const router = useRouter();
 
@@ -28,19 +27,6 @@ export default function LoginPage() {
       router.push("/");
     } catch {
       setError("Invalid ID or password");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSeed = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const res = await seedAdmin();
-      setError(res.message);
-    } catch {
-      setError("Admin already exists or error");
     } finally {
       setLoading(false);
     }
@@ -91,13 +77,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <button
-            onClick={handleSeed}
-            disabled={loading}
-            className="w-full mt-4 text-xs text-zinc-400 hover:text-zinc-600 underline disabled:opacity-50"
-          >
-            First time? Create admin account (ID: 00001, password: admin)
-          </button>
         </div>
       </div>
     </div>
