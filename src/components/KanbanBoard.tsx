@@ -8,6 +8,7 @@ import LeadCard from "./LeadCard";
 import LeadPreview from "./LeadPreview";
 import LeadModal from "./LeadModal";
 import DailyActivityInput from "./DailyActivityInput";
+import { useAuth } from "./AuthContext";
 
 const columns = [
   "New",
@@ -34,6 +35,8 @@ export default function KanbanBoard({
   onSaveLead,
   onDeleteLead,
 }: KanbanBoardProps) {
+  const { user } = useAuth();
+  const userDisplayName = user ? `${user.name} ${user.surname}` : "";
   const [previewLead, setPreviewLead] = useState<Doc<"leads"> | null>(null);
   const [editLead, setEditLead] = useState<Doc<"leads"> | null>(null);
   const [showNewModal, setShowNewModal] = useState(false);
@@ -159,7 +162,7 @@ export default function KanbanBoard({
       )}
 
       {activityOpen && (
-        <DailyActivityInput onClose={() => setActivityOpen(false)} />
+        <DailyActivityInput onClose={() => setActivityOpen(false)} initialSetter={userDisplayName} />
       )}
     </div>
   );

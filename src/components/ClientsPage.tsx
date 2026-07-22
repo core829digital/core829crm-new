@@ -367,7 +367,7 @@ function ServicesList({ clientId }: { clientId: Id<"clients"> }) {
   const updateStatus = useMutation(api.services.updateStatus);
   const removeService = useMutation(api.services.remove);
 
-  const [viewQuote, setViewQuote] = useState<{ storageId: Id<"_storage">; fileName: string } | null>(null);
+  const [viewQuote, setViewQuote] = useState<{ url: string; fileName: string } | null>(null);
 
   if (!services) return <div className="text-sm text-zinc-400">Loading...</div>;
 
@@ -384,15 +384,14 @@ function ServicesList({ clientId }: { clientId: Id<"clients"> }) {
           onAccept={() => updateStatus({ id: s._id, status: "Accepted" })}
           onDecline={() => updateStatus({ id: s._id, status: "Declined" })}
           onRemove={() => { if (confirm("Remove this service?")) removeService({ id: s._id }); }}
-                  onViewQuote={() => setViewQuote({ storageId: s.quoteFileId!, fileName: s.quoteFileName || "Quote.pdf" })}
+          onViewQuote={(url: string) => setViewQuote({ url, fileName: s.quoteFileName || "Quote.pdf" })}
         />
       ))}
       {viewQuote && (
         <PdfPreviewModal
-          storageId={viewQuote.storageId}
+          url={viewQuote.url}
           fileName={viewQuote.fileName}
           onClose={() => setViewQuote(null)}
-          onDownload={() => {}}
         />
       )}
     </div>
@@ -415,7 +414,7 @@ function ServiceRow({
   onAccept: () => void;
   onDecline: () => void;
   onRemove: () => void;
-  onViewQuote: () => void;
+  onViewQuote: (url: string) => void;
 }) {
   const quoteUrl = useQuery(
     api.services.getFileUrl,
@@ -443,7 +442,7 @@ function ServiceRow({
       <div className="flex items-center gap-1 shrink-0">
         {quoteUrl && (
           <button
-            onClick={() => { onViewQuote(); }}
+            onClick={() => { onViewQuote(quoteUrl); }}
             className="p-1.5 text-zinc-400 hover:text-zinc-600 rounded-md transition-colors"
             title="View Quote"
           >
@@ -849,7 +848,6 @@ function InvoiceRow({ invoice }: {
   const removeInvoice = useMutation(api.invoices.remove);
 
   const [showPdf, setShowPdf] = useState(false);
-  const [downloading, setDownloading] = useState(false);
 
   const statusColor: Record<string, string> = {
     Pending: "bg-amber-100 text-amber-700",
@@ -859,27 +857,6 @@ function InvoiceRow({ invoice }: {
   };
 
   const [editingStatus, setEditingStatus] = useState(false);
-
-  const handleDownload = async () => {
-    if (!fileUrl) return;
-    setDownloading(true);
-    try {
-      const res = await fetch(fileUrl);
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = invoice.fileName || `invoice-${invoice.invoiceNumber}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("Download failed", err);
-    } finally {
-      setDownloading(false);
-    }
-  };
 
   return (
     <>
@@ -921,12 +898,11 @@ function InvoiceRow({ invoice }: {
                 <Eye size={14} />
               </button>
               <button
-                onClick={handleDownload}
-                disabled={downloading}
+                onClick={() => { downloadFile(fileUrl, invoice.fileName || `invoice-${invoice.invoiceNumber}.pdf`); }}
                 className="p-1 text-zinc-400 hover:text-zinc-600"
                 title="Download PDF"
               >
-                {downloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                <Download size={14} />
               </button>
             </>
           )}
@@ -942,10 +918,9 @@ function InvoiceRow({ invoice }: {
 
       {showPdf && fileUrl && (
         <PdfPreviewModal
-          fileUrl={fileUrl}
+          url={fileUrl}
           fileName={invoice.fileName || `invoice-${invoice.invoiceNumber}.pdf`}
           onClose={() => setShowPdf(false)}
-          onDownload={handleDownload}
         />
       )}
     </>
@@ -1074,55 +1049,28 @@ function InvoiceModal({ projectId, onClose }: { projectId: Id<"projects">; onClo
   );
 }
 
-function PdfPreviewModal({ fileUrl, fileName, onClose, storageId, onDownload: _od }: {
-  fileUrl?: string;
+function downloadFile(url: string, fileName: string) {
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  a.target = "_blank";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function PdfPreviewModal({ url, fileName, onClose }: {
+  url: string;
   fileName: string;
   onClose: () => void;
-  onDownload?: () => void;
-  storageId?: Id<"_storage">;
 }) {
-  const resolvedUrl = useQuery(
-    api.services.getFileUrl,
-    storageId ? { storageId } : "skip"
-  );
-  const srcUrl = storageId ? resolvedUrl : fileUrl;
-  const [downloading, setDownloading] = useState(false);
   const [notLoaded, setNotLoaded] = useState(false);
 
   useEffect(() => {
+    setNotLoaded(false);
     const t = setTimeout(() => setNotLoaded(true), 8000);
     return () => clearTimeout(t);
-  }, [srcUrl]);
-
-  const handleDownload = async () => {
-    if (!srcUrl) return;
-    setDownloading(true);
-    try {
-      const res = await fetch(srcUrl);
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url; a.download = fileName;
-      document.body.appendChild(a); a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch {
-      window.open(srcUrl, "_blank");
-    } finally {
-      setDownloading(false);
-    }
-  };
-
-  if (!srcUrl) {
-    return (
-      <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[60] p-0" onClick={onClose}>
-        <div className="bg-white rounded-xl p-6 text-center" onClick={(e) => e.stopPropagation()}>
-          <Loader2 size={24} className="animate-spin text-zinc-400 mx-auto" />
-          <p className="text-sm text-zinc-400 mt-2">Resolving file URL...</p>
-        </div>
-      </div>
-    );
-  }
+  }, [url]);
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[60] p-0">
@@ -1134,15 +1082,14 @@ function PdfPreviewModal({ fileUrl, fileName, onClose, storageId, onDownload: _o
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={handleDownload}
-              disabled={downloading}
-              className="flex items-center gap-1.5 text-xs bg-black text-white px-3 py-1.5 rounded-lg hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+              onClick={() => downloadFile(url, fileName)}
+              className="flex items-center gap-1.5 text-xs bg-black text-white px-3 py-1.5 rounded-lg hover:bg-zinc-800 transition-colors"
             >
-              {downloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+              <Download size={14} />
               Download
             </button>
             <button
-              onClick={() => srcUrl && window.open(srcUrl, "_blank")}
+              onClick={() => window.open(url, "_blank", "noopener")}
               className="flex items-center gap-1.5 text-xs border border-zinc-300 px-3 py-1.5 rounded-lg hover:bg-zinc-50 transition-colors"
             >
               Open in new tab
@@ -1152,7 +1099,7 @@ function PdfPreviewModal({ fileUrl, fileName, onClose, storageId, onDownload: _o
             </button>
           </div>
         </div>
-        <div className="flex-1 bg-zinc-100 overflow-hidden flex items-center justify-center">
+        <div className="flex-1 bg-zinc-100 overflow-hidden flex items-center justify-center relative">
           {notLoaded ? (
             <div className="flex flex-col items-center gap-3 text-center px-4">
               <FileText size={48} className="text-zinc-300" />
@@ -1161,25 +1108,25 @@ function PdfPreviewModal({ fileUrl, fileName, onClose, storageId, onDownload: _o
               </p>
               <div className="flex gap-2">
                 <button
-                  onClick={() => srcUrl && window.open(srcUrl, "_blank")}
+                  onClick={() => window.open(url, "_blank", "noopener")}
                   className="bg-black text-white px-4 py-2 rounded-lg text-sm hover:bg-zinc-800 transition-colors"
                 >
                   Open in new tab
                 </button>
                 <button
-                  onClick={handleDownload}
-                  disabled={downloading}
+                  onClick={() => downloadFile(url, fileName)}
                   className="border border-zinc-300 px-4 py-2 rounded-lg text-sm hover:bg-zinc-50 transition-colors"
                 >
-                  {downloading ? <Loader2 size={14} className="animate-spin" /> : "Download"}
+                  Download
                 </button>
               </div>
             </div>
           ) : (
             <iframe
-              src={srcUrl}
+              src={url}
               className="w-full h-full border-0"
               title={fileName}
+              sandbox="allow-scripts allow-same-origin"
             />
           )}
         </div>

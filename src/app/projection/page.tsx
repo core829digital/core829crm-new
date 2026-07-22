@@ -2,7 +2,7 @@
 
 import { useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { DollarSign, CalendarDays } from "lucide-react";
 
 export default function ProjectionPage() {
@@ -17,23 +17,30 @@ export default function ProjectionPage() {
   const [closeRate, setCloseRate] = useState<number | null>(null);
   const [avgDealSize, setAvgDealSize] = useState<number | null>(null);
 
-  useMemo(() => {
-    if (leads && leads.length > 0) {
-      const shows = leads.filter((l) => l.meetingStatus === "Show").length;
-      const booked = leads.filter((l) => l.dateMeetingBooked).length;
-      const offersMade = leads.filter((l) => l.offerMade).length;
-      const callsTaken = leads.filter((l) => l.meetingStatus === "Show").length;
-      const sales = leads.filter((l) => l.leadStatus === "Won").length;
-      const totalValue = leads
-        .filter((l) => l.leadStatus === "Won")
-        .reduce((sum, l) => sum + l.totalDealValue, 0);
+  const defaultRates = useMemo(() => {
+    if (!leads || leads.length === 0) return null;
+    const shows = leads.filter((l) => l.meetingStatus === "Show").length;
+    const booked = leads.filter((l) => l.dateMeetingBooked).length;
+    const offersMade = leads.filter((l) => l.offerMade).length;
+    const callsTaken = leads.filter((l) => l.meetingStatus === "Show").length;
+    const sales = leads.filter((l) => l.leadStatus === "Won").length;
+    const totalValue = leads
+      .filter((l) => l.leadStatus === "Won")
+      .reduce((sum, l) => sum + l.totalDealValue, 0);
+    return {
+      showUp: booked > 0 ? Math.round((shows / booked) * 100) : 0,
+      offer: callsTaken > 0 ? Math.round((offersMade / callsTaken) * 100) : 0,
+      close: callsTaken > 0 ? Math.round((sales / callsTaken) * 100) : 0,
+      dealSize: sales > 0 ? Math.round(totalValue / sales) : 0,
+    };
+  }, [leads]);
 
-      if (showUpRate === null && booked > 0) setShowUpRate(Math.round((shows / booked) * 100));
-      if (offerRate === null && callsTaken > 0) setOfferRate(Math.round((offersMade / callsTaken) * 100));
-      if (closeRate === null && callsTaken > 0) setCloseRate(Math.round((sales / callsTaken) * 100));
-      if (avgDealSize === null && sales > 0) setAvgDealSize(Math.round(totalValue / sales));
-    }
-  }, [leads, showUpRate, offerRate, closeRate, avgDealSize]);
+  useEffect(() => {
+    if (defaultRates && showUpRate === null) setShowUpRate(defaultRates.showUp);
+    if (defaultRates && offerRate === null) setOfferRate(defaultRates.offer);
+    if (defaultRates && closeRate === null) setCloseRate(defaultRates.close);
+    if (defaultRates && avgDealSize === null) setAvgDealSize(defaultRates.dealSize);
+  }, [defaultRates, showUpRate, offerRate, closeRate, avgDealSize]);
 
   // meetings scheduled for the rest of this month
   const remainingMeetings = useMemo(() => {
