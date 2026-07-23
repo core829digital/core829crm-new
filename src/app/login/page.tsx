@@ -7,6 +7,7 @@ import { api } from "convex/_generated/api";
 import { useAuth } from "@/components/AuthContext";
 import { Loader2, LogIn } from "lucide-react";
 import Image from "next/image";
+import CertBadges from "@/components/CertBadges";
 
 export default function LoginPage() {
   const [userId, setUserId] = useState("");
@@ -79,6 +80,9 @@ export default function LoginPage() {
             </button>
           </form>
 
+          <div className="mt-6 pt-5 border-t border-zinc-100">
+            <CertBadges />
+          </div>
         </div>
       </div>
     </div>
