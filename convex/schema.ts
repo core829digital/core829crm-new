@@ -179,4 +179,11 @@ export default defineSchema({
     order: v.number(),
     createdAt: v.string(),
   }).index("by_active", ["isActive"]),
+
+  loginAttempts: defineTable({
+    userId: v.string(),
+    ip: v.optional(v.string()),
+    success: v.boolean(),
+    timestamp: v.string(),
+  }).index("by_userId_timestamp", ["userId", "timestamp"]),
 });

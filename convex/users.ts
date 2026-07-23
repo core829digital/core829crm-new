@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, type MutationCtx } from "./_generated/server";
 import { notify } from "./notify";
 
 async function hashPassword(password: string, salt: string): Promise<string> {
@@ -24,20 +24,54 @@ function generateUserId(): string {
   return String(n);
 }
 
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+const MAX_ATTEMPTS = 5;
+
+async function checkRateLimit(ctx: MutationCtx, userId: string) {
+  const cutoff = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
+  const recentAttempts = await ctx.db
+    .query("loginAttempts")
+    .withIndex("by_userId_timestamp", (q) =>
+      q.eq("userId", userId).gt("timestamp", cutoff)
+    )
+    .collect();
+  if (recentAttempts.length >= MAX_ATTEMPTS) {
+    throw new Error("Too many login attempts. Please try again in 15 minutes.");
+  }
+}
+
+async function logAttempt(ctx: MutationCtx, userId: string, success: boolean) {
+  await ctx.db.insert("loginAttempts", {
+    userId,
+    success,
+    timestamp: new Date().toISOString(),
+  });
+}
+
 export const login = mutation({
   args: {
     userId: v.string(),
     password: v.string(),
   },
   handler: async (ctx, args) => {
+    await checkRateLimit(ctx, args.userId);
+
     const user = await ctx.db
       .query("users")
       .withIndex("by_userId", (q) => q.eq("userId", args.userId))
       .first();
-    if (!user) throw new Error("Invalid credentials");
+    if (!user) {
+      await logAttempt(ctx, args.userId, false);
+      throw new Error("Invalid credentials");
+    }
 
     const hash = await hashPassword(args.password, user.salt);
-    if (hash !== user.passwordHash) throw new Error("Invalid credentials");
+    if (hash !== user.passwordHash) {
+      await logAttempt(ctx, args.userId, false);
+      throw new Error("Invalid credentials");
+    }
+
+    await logAttempt(ctx, args.userId, true);
 
     return {
       _id: user._id,
