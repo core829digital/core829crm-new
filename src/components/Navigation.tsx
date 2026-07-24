@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { useAuth } from "./AuthContext";
 import NotificationBell from "./NotificationBell";
-import { LayoutDashboard, KanbanSquare, Table2, TrendingUp, CalendarDays, Users, Shield, LogOut } from "lucide-react";
+import { LayoutDashboard, KanbanSquare, Table2, TrendingUp, CalendarDays, Users, Shield, LogOut, MessageCircle } from "lucide-react";
 
 const links = [
   { href: "/", label: "Kanban", icon: KanbanSquare },
@@ -14,6 +14,7 @@ const links = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/projection", label: "Projection", icon: TrendingUp },
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
+  { href: "/chat", label: "Chat", icon: MessageCircle },
 ];
 
 export default function Navigation() {

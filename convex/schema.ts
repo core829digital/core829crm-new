@@ -186,4 +186,56 @@ export default defineSchema({
     success: v.boolean(),
     timestamp: v.string(),
   }).index("by_userId_timestamp", ["userId", "timestamp"]),
+
+  conversations: defineTable({
+    name: v.optional(v.string()),
+    type: v.union(v.literal("direct"), v.literal("group"), v.literal("lead")),
+    leadId: v.optional(v.id("leads")),
+    createdBy: v.string(),
+    createdAt: v.string(),
+    lastMessageAt: v.optional(v.string()),
+    lastMessagePreview: v.optional(v.string()),
+  }).index("by_lastMessageAt", ["lastMessageAt"])
+    .index("by_leadId", ["leadId"]),
+
+  conversationMembers: defineTable({
+    conversationId: v.id("conversations"),
+    userId: v.string(),
+    userName: v.string(),
+    joinedAt: v.string(),
+    role: v.union(v.literal("member"), v.literal("admin")),
+  }).index("by_conversation", ["conversationId"])
+    .index("by_user", ["userId"]),
+
+  messages: defineTable({
+    conversationId: v.id("conversations"),
+    senderId: v.string(),
+    senderName: v.string(),
+    content: v.string(),
+    replyTo: v.optional(v.id("messages")),
+    reactions: v.array(v.object({
+      emoji: v.string(),
+      userIds: v.array(v.string()),
+    })),
+    hasAttachment: v.optional(v.boolean()),
+    attachmentName: v.optional(v.string()),
+    attachmentType: v.optional(v.string()),
+    attachmentStorageId: v.optional(v.id("_storage")),
+    editedAt: v.optional(v.string()),
+    deletedAt: v.optional(v.string()),
+    createdAt: v.string(),
+  }).index("by_conversation", ["conversationId", "createdAt"]),
+
+  readReceipts: defineTable({
+    conversationId: v.id("conversations"),
+    userId: v.string(),
+    lastReadAt: v.string(),
+  }).index("by_conversation_user", ["conversationId", "userId"]),
+
+  typingStatus: defineTable({
+    conversationId: v.id("conversations"),
+    userId: v.string(),
+    userName: v.string(),
+    expiresAt: v.number(),
+  }).index("by_conversation", ["conversationId"]),
 });

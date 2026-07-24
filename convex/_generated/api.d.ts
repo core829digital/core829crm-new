@@ -11,10 +11,12 @@
 import type * as activityLogs from "../activityLogs.js";
 import type * as announcements from "../announcements.js";
 import type * as clients from "../clients.js";
+import type * as conversations from "../conversations.js";
 import type * as dailyActivity from "../dailyActivity.js";
 import type * as invoices from "../invoices.js";
 import type * as leads from "../leads.js";
 import type * as market from "../market.js";
+import type * as messages from "../messages.js";
 import type * as migrations from "../migrations.js";
 import type * as notifications from "../notifications.js";
 import type * as notify from "../notify.js";
@@ -34,10 +36,12 @@ declare const fullApi: ApiFromModules<{
   activityLogs: typeof activityLogs;
   announcements: typeof announcements;
   clients: typeof clients;
+  conversations: typeof conversations;
   dailyActivity: typeof dailyActivity;
   invoices: typeof invoices;
   leads: typeof leads;
   market: typeof market;
+  messages: typeof messages;
   migrations: typeof migrations;
   notifications: typeof notifications;
   notify: typeof notify;
