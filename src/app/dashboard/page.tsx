@@ -93,21 +93,21 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Visibility Dashboard</h1>
-        <div className="flex flex-wrap gap-2">
-          <select className="select text-sm" value={setterFilter} onChange={(e) => setSetterFilter(e.target.value)}>
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+          <select className="select text-sm flex-1 min-w-0 sm:flex-initial" value={setterFilter} onChange={(e) => setSetterFilter(e.target.value)}>
             <option value="all">All Setters</option>
             {allSetters.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
-          <select className="select text-sm" value={closerFilter} onChange={(e) => setCloserFilter(e.target.value)}>
+          <select className="select text-sm flex-1 min-w-0 sm:flex-initial" value={closerFilter} onChange={(e) => setCloserFilter(e.target.value)}>
             <option value="all">All Closers</option>
             {allClosers.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
-          <select className="select text-sm" value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)}>
+          <select className="select text-sm flex-1 min-w-0 sm:flex-initial" value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)}>
             <option value="all">All Sources</option>
             {allSources.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
-          <input className="input text-sm w-full sm:w-36" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} placeholder="From" />
-          <input className="input text-sm w-full sm:w-36" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} placeholder="To" />
+          <input className="input text-sm flex-1 min-w-0 sm:w-36" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} placeholder="From" />
+          <input className="input text-sm flex-1 min-w-0 sm:w-36" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} placeholder="To" />
         </div>
       </div>
 
@@ -220,7 +220,47 @@ export default function DashboardPage() {
           <Phone size={18} className="text-red-500" />
           Setter Performance
         </h2>
-        <div className="overflow-x-auto border rounded-lg">
+
+        {/* Mobile setter cards */}
+        <div className="sm:hidden space-y-2">
+          {Object.entries(setterMetrics as Record<string, { speedToLead: number; bookingLag: string; meetingsSet: number; shows: number; noShows: number; cancels: number; showUpRate: number; dqRate: number }>).map(([name, m]) => (
+            <div key={name} className="bg-white border border-gray-200 rounded-lg p-3 text-xs">
+              <div className="font-semibold text-sm mb-2">{name}</div>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <div className="text-gray-400">Speed</div>
+                  <div className={`font-medium ${m.speedToLead <= 60 ? "text-green-600" : "text-red-600"}`}>{m.speedToLead}m</div>
+                </div>
+                <div>
+                  <div className="text-gray-400">Lag</div>
+                  <div className={`font-medium ${parseFloat(m.bookingLag) <= 4 ? "text-green-600" : "text-red-600"}`}>{m.bookingLag}d</div>
+                </div>
+                <div>
+                  <div className="text-gray-400">Show Rate</div>
+                  <div className="font-medium">{m.showUpRate}%</div>
+                </div>
+                <div>
+                  <div className="text-gray-400">Meetings</div>
+                  <div className="font-medium">{m.meetingsSet}</div>
+                </div>
+                <div>
+                  <div className="text-gray-400">Shows</div>
+                  <div>{m.shows}</div>
+                </div>
+                <div>
+                  <div className="text-gray-400">DQ Rate</div>
+                  <div className={`${m.dqRate > 20 ? "text-red-600 font-bold" : ""}`}>{m.dqRate}%</div>
+                </div>
+              </div>
+            </div>
+          ))}
+          {Object.keys(setterMetrics).length === 0 && (
+            <div className="text-center py-6 text-gray-400 text-sm">No setter data</div>
+          )}
+        </div>
+
+        {/* Desktop setter table */}
+        <div className="hidden sm:block overflow-x-auto border rounded-lg table-scroll">
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-50">
               <tr>
@@ -263,7 +303,47 @@ export default function DashboardPage() {
           <TrendingUp size={18} className="text-red-500" />
           Closer Performance
         </h2>
-        <div className="overflow-x-auto border rounded-lg">
+
+        {/* Mobile closer cards */}
+        <div className="sm:hidden space-y-2">
+          {Object.entries(closerMetrics as Record<string, { callsTaken: number; offers: number; offerRate: number; sales: number; closeRate: number; closeRateOnOffers: number; oneCallSales: number; followUpSales: number; avgDealSize: number; rpc: number; lossReasons: Record<string, number>; agingFollowUps: number }>).map(([name, m]) => (
+            <div key={name} className="bg-white border border-gray-200 rounded-lg p-3 text-xs">
+              <div className="font-semibold text-sm mb-2">{name}</div>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <div className="text-gray-400">Sales</div>
+                  <div className="font-medium">{m.sales}</div>
+                </div>
+                <div>
+                  <div className="text-gray-400">Close Rate</div>
+                  <div className="font-medium">{m.closeRate}%</div>
+                </div>
+                <div>
+                  <div className="text-gray-400">Avg Deal</div>
+                  <div className="font-medium">${Math.round(m.avgDealSize).toLocaleString()}</div>
+                </div>
+                <div>
+                  <div className="text-gray-400">Calls</div>
+                  <div>{m.callsTaken}</div>
+                </div>
+                <div>
+                  <div className="text-gray-400">RPC</div>
+                  <div>${Math.round(m.rpc).toLocaleString()}</div>
+                </div>
+                <div>
+                  <div className="text-gray-400">Aging F/Us</div>
+                  <div className={`${m.agingFollowUps > 0 ? "text-red-600 font-bold" : ""}`}>{m.agingFollowUps}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+          {Object.keys(closerMetrics).length === 0 && (
+            <div className="text-center py-6 text-gray-400 text-sm">No closer data</div>
+          )}
+        </div>
+
+        {/* Desktop closer table */}
+        <div className="hidden sm:block overflow-x-auto border rounded-lg table-scroll">
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-50">
               <tr>

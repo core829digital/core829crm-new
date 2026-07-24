@@ -146,7 +146,47 @@ export default function LeadTable({ leads, onSave, onDelete }: LeadTableProps) {
         </div>
       </div>
 
-      <div className="overflow-x-auto border border-gray-200 rounded-lg">
+      {/* Mobile card view */}
+      <div className="sm:hidden space-y-2">
+        {filtered.map((lead) => (
+          <div
+            key={lead._id}
+            onClick={() => handleCardClick(lead)}
+            className="bg-white border border-gray-200 rounded-lg p-3 cursor-pointer hover:border-gray-300 active:bg-gray-50"
+          >
+            <div className="flex items-start justify-between gap-2 mb-1.5">
+              <div className="min-w-0 flex-1">
+                <div className="font-semibold text-sm truncate">{lead.leadName}</div>
+                {lead.company && (
+                  <div className="text-xs text-gray-500 truncate">{lead.company}</div>
+                )}
+              </div>
+              <span className={`badge ${badgeClass(lead.leadStatus)} text-[10px] shrink-0`}>
+                {lead.leadStatus === "Follow-Up Ongoing" ? "F/Up" : lead.leadStatus === "Meeting Follow-Up" ? "Mtg F/Up" : lead.leadStatus}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-500">
+              <div><span className="text-gray-400">Setter:</span> {lead.setterName || "—"}</div>
+              <div><span className="text-gray-400">Closer:</span> {lead.closerName || "—"}</div>
+              <div><span className="text-gray-400">Value:</span> <span className="font-medium text-gray-700">${(lead.totalDealValue || 0).toLocaleString()}</span></div>
+              <div><span className="text-gray-400">Earnings:</span> <span className="font-medium text-red-600">${(lead.earnings || 0).toLocaleString()}</span></div>
+              {lead.email && <div className="col-span-2 truncate"><span className="text-gray-400">📧</span> {lead.email}</div>}
+              <div className="col-span-2 flex items-center gap-2 text-[10px] text-gray-400">
+                <span>Created: {lead.dateCreated ? new Date(lead.dateCreated).toLocaleDateString() : "—"}</span>
+                {lead.meetingStatus && (
+                  <span>Mtg: {lead.meetingStatus}</span>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+        {filtered.length === 0 && (
+          <div className="text-center py-8 text-gray-400 text-sm">No leads found</div>
+        )}
+      </div>
+
+      {/* Desktop table view */}
+      <div className="hidden sm:block overflow-x-auto border border-gray-200 rounded-lg table-scroll">
         <table className="min-w-full divide-y divide-gray-200 text-sm">
           <thead className="bg-gray-50">
             <tr>

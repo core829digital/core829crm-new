@@ -26,9 +26,9 @@ export default function Navigation() {
   };
 
   return (
-    <nav className="bg-black text-white border-b border-zinc-800">
+    <nav className="bg-black text-white border-b border-zinc-800 relative">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center gap-1 sm:gap-4 h-14 overflow-x-auto">
+        <div className="flex items-center gap-1 sm:gap-4 h-14 overflow-x-auto no-scrollbar">
           <Link href="/" className="shrink-0 mr-1">
             <Image src="/logo-icon.png" alt="Core829" width={28} height={28} priority />
           </Link>

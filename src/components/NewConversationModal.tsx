@@ -72,8 +72,8 @@ export default function NewConversationModal({
   const displayUsers = search.trim().length >= 2 ? searchResults : (allUsers || []).filter((u) => u.userId !== user.userId);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 max-h-[80vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40">
+      <div className="bg-white rounded-t-xl sm:rounded-xl shadow-xl w-full sm:max-w-md sm:mx-4 max-h-[90vh] sm:max-h-[80vh] flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-zinc-200">
           <h2 className="text-sm font-semibold">New Conversation</h2>
           <button onClick={onClose} className="p-1 text-zinc-400 hover:text-zinc-600 transition-colors">

@@ -144,80 +144,80 @@ export default function ProjectionPage() {
       </div>
 
       {/* Projection Results */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-red-50 border-2 border-red-200 rounded-lg p-5">
-          <div className="text-sm text-red-600 font-medium mb-1">Worst Case</div>
-          <div className="text-3xl font-bold text-red-600">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+        <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4 sm:p-5">
+          <div className="text-xs sm:text-sm text-red-600 font-medium mb-1">Worst Case</div>
+          <div className="text-xl sm:text-3xl font-bold text-red-600 break-all">
             ${Math.round(projection.worst).toLocaleString()}
           </div>
-          <div className="text-xs text-red-500 mt-1">
+          <div className="text-[10px] sm:text-xs text-red-500 mt-1">
             -10% on all rates, -15% deal size
           </div>
         </div>
-        <div className="bg-black text-white rounded-lg p-5">
-          <div className="text-sm text-zinc-400 font-medium mb-1">Expected Case</div>
-          <div className="text-3xl font-bold">
+        <div className="bg-black text-white rounded-lg p-4 sm:p-5">
+          <div className="text-xs sm:text-sm text-zinc-400 font-medium mb-1">Expected Case</div>
+          <div className="text-xl sm:text-3xl font-bold break-all">
             ${Math.round(projection.expected).toLocaleString()}
           </div>
-          <div className="text-xs text-zinc-500 mt-1">
+          <div className="text-[10px] sm:text-xs text-zinc-500 mt-1">
             Current rates × {remainingMeetings} remaining meetings
           </div>
         </div>
-        <div className="bg-green-50 border-2 border-green-200 rounded-lg p-5">
-          <div className="text-sm text-green-600 font-medium mb-1">Best Case</div>
-          <div className="text-3xl font-bold text-green-600">
+        <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4 sm:p-5">
+          <div className="text-xs sm:text-sm text-green-600 font-medium mb-1">Best Case</div>
+          <div className="text-xl sm:text-3xl font-bold text-green-600 break-all">
             ${Math.round(projection.best).toLocaleString()}
           </div>
-          <div className="text-xs text-green-500 mt-1">
+          <div className="text-[10px] sm:text-xs text-green-500 mt-1">
             +10% on all rates, +15% deal size
           </div>
         </div>
       </div>
 
       {/* Running Total */}
-      <div className="stat-card">
+      <div className="card">
         <div className="flex items-center gap-3">
-          <DollarSign size={28} className="text-red-500" />
-          <div>
+          <DollarSign size={24} className="text-red-500 shrink-0" />
+          <div className="min-w-0">
             <div className="stat-label">Revenue Already Closed This Month</div>
-            <div className="stat-value text-2xl">
+            <div className="stat-value text-xl sm:text-2xl">
               ${(dashboardData?.moneyMetrics?.revenueGenerated || 0).toLocaleString()}
             </div>
           </div>
         </div>
         <div className="mt-3 pt-3 border-t">
           <div className="stat-label">Projected Month-End Total</div>
-          <div className="grid grid-cols-3 gap-4 mt-1">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-1">
             <div>
-              <span className="text-red-600 font-bold text-lg">
+              <span className="text-red-600 font-bold text-sm sm:text-lg break-all">
                 ${Math.round((dashboardData?.moneyMetrics?.revenueGenerated || 0) + projection.worst).toLocaleString()}
               </span>
-              <div className="text-xs text-gray-500">Worst</div>
+              <div className="text-[10px] sm:text-xs text-gray-500">Worst</div>
             </div>
             <div>
-              <span className="font-bold text-lg">
+              <span className="font-bold text-sm sm:text-lg break-all">
                 ${Math.round((dashboardData?.moneyMetrics?.revenueGenerated || 0) + projection.expected).toLocaleString()}
               </span>
-              <div className="text-xs text-gray-500">Expected</div>
+              <div className="text-[10px] sm:text-xs text-gray-500">Expected</div>
             </div>
             <div>
-              <span className="text-green-600 font-bold text-lg">
+              <span className="text-green-600 font-bold text-sm sm:text-lg break-all">
                 ${Math.round((dashboardData?.moneyMetrics?.revenueGenerated || 0) + projection.best).toLocaleString()}
               </span>
-              <div className="text-xs text-gray-500">Best</div>
+              <div className="text-[10px] sm:text-xs text-gray-500">Best</div>
             </div>
           </div>
         </div>
         {goalData != null && goalData > 0 && (
           <div className="mt-3 pt-3 border-t">
             <div className="stat-label">Monthly Goal</div>
-            <div className="flex items-center gap-4 mt-1">
-              <span className="font-bold text-lg">${goalData.toLocaleString()}</span>
+            <div className="flex items-center gap-2 sm:gap-4 mt-1">
+              <span className="font-bold text-sm sm:text-lg">${goalData.toLocaleString()}</span>
               {(() => {
                 const expectedTotal = (dashboardData?.moneyMetrics?.revenueGenerated || 0) + projection.expected;
                 const pct = Math.round((expectedTotal / goalData) * 100);
                 return (
-                  <span className={`font-bold text-lg ${pct >= 100 ? "text-green-600" : "text-red-600"}`}>
+                  <span className={`font-bold text-sm sm:text-lg ${pct >= 100 ? "text-green-600" : "text-red-600"}`}>
                     {pct}% projected
                   </span>
                 );

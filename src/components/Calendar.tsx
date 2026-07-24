@@ -180,58 +180,46 @@ export default function Calendar({ leads, onCreateLead, onUpdateLead }: Calendar
             return (
               <div
                 key={key}
-                className={`min-h-[100px] sm:min-h-[120px] border-b border-r border-gray-100 p-1 relative ${
+                className={`min-h-[90px] sm:min-h-[120px] border-b border-r border-gray-100 p-[2px] sm:p-1 relative ${
                   !isCurrent ? "bg-gray-50" : "bg-white"
                 } ${isDragOver ? "bg-blue-50" : ""}`}
                 onDragOver={isCurrent ? handleDragOver : undefined}
                 onDrop={isCurrent ? (e) => handleDrop(e, date) : undefined}
                 onClick={() => isCurrent && handleCellClick(date)}
               >
-                <div className={`text-xs font-medium mb-1 px-1 py-0.5 rounded-full w-fit ${
+                <div className={`text-[10px] sm:text-xs font-medium mb-[1px] sm:mb-1 px-1 py-[1px] sm:py-0.5 rounded-full w-fit ${
                   isToday ? "bg-red-600 text-white font-bold" : isCurrent ? "text-gray-700" : "text-gray-300"
                 }`}>
                   {dayNum}
                 </div>
 
-                <div className="space-y-0.5">
-                  {dayLeads.map((lead) => {
+                <div className="space-y-[1px] sm:space-y-0.5">
+                  {dayLeads.slice(0, isCurrent && dayLeads.length > 2 ? 2 : dayLeads.length).map((lead) => {
                     const signals = blockSignal(lead);
                     return (
                       <div
                         key={lead._id}
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, lead._id)}
-                        onDragEnd={handleDragEnd}
                         onClick={(e) => { e.stopPropagation(); handleBlockClick(lead); }}
-                        className={`text-[11px] leading-tight px-1.5 py-1 rounded cursor-pointer transition-shadow hover:shadow-md ${
+                        className={`text-[9px] sm:text-[11px] leading-tight px-1 sm:px-1.5 py-[1px] sm:py-1 rounded cursor-pointer transition-shadow hover:shadow-md ${
                           signals.includes("lag") || signals.includes("aging")
                             ? "bg-red-50 border border-red-300 text-red-700"
                             : signals.includes("missing")
                             ? "bg-amber-50 border border-amber-300 text-amber-700"
                             : "bg-gray-50 border border-gray-200 text-gray-700 hover:border-gray-300"
-                        } ${draggingId === lead._id ? "opacity-50" : ""}`}
+                        }`}
                       >
                         <div className="flex items-center gap-1">
-                          <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: statusColors[lead.leadStatus] || "#999" }} />
+                          <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full shrink-0" style={{ backgroundColor: statusColors[lead.leadStatus] || "#999" }} />
                           <span className="font-medium truncate flex-1">{lead.leadName}</span>
                         </div>
-                        <div className="text-[10px] opacity-70 truncate">{lead.company}</div>
-                        <div className="text-[10px] opacity-60 truncate">
-                          {lead.setterName && <span>S:{lead.setterName}</span>}
-                          {lead.setterName && lead.closerName && <span> </span>}
-                          {lead.closerName && <span>C:{lead.closerName}</span>}
-                        </div>
-                        {signals.length > 0 && (
-                          <div className="flex items-center gap-0.5 mt-0.5">
-                            <AlertTriangle size={10} className="shrink-0" />
-                            {signals.includes("lag") && <span className="text-[9px]">Booking Lag</span>}
-                            {signals.includes("aging") && <span className="text-[9px]">Aging</span>}
-                            {signals.includes("missing") && <span className="text-[9px]">Unrecorded</span>}
-                          </div>
-                        )}
                       </div>
                     );
                   })}
+                  {dayLeads.length > 2 && isCurrent && (
+                    <div className="text-[8px] sm:text-[10px] text-gray-400 text-center pt-[1px]">
+                      +{dayLeads.length - 2} more
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -331,12 +319,12 @@ function NewMeetingModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-4 sm:pt-20">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-start justify-center pt-0 sm:pt-20">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md z-10 mx-2 max-h-[85vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b px-4 py-3 flex items-center justify-between">
+      <div className="relative bg-white rounded-t-xl sm:rounded-lg shadow-xl w-full sm:max-w-md z-10 sm:mx-2 max-h-[90vh] sm:max-h-[85vh] overflow-y-auto">
+        <div className="sticky top-0 bg-white border-b px-4 py-3 flex items-center justify-between rounded-t-xl sm:rounded-t-lg">
           <h2 className="font-bold">New Meeting — {dateStr}</h2>
-          <button onClick={onClose} className="p-2 sm:p-1 hover:bg-gray-100 rounded"><X size={18} /></button>
+          <button onClick={onClose} className="p-2 sm:p-1 hover:bg-gray-100 rounded-lg"><X size={18} /></button>
         </div>
 
         <div className="p-4 space-y-3">
@@ -368,34 +356,40 @@ function NewMeetingModal({
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="sm:col-span-2">
+            <div className="space-y-3">
+              <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Lead Name *</label>
                 <input className="input" value={newName} onChange={(e) => setNewName(e.target.value)} required />
               </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Company</label>
-                <input className="input" value={newCompany} onChange={(e) => setNewCompany(e.target.value)} />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Company</label>
+                  <input className="input" value={newCompany} onChange={(e) => setNewCompany(e.target.value)} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Source</label>
+                  <input className="input" value={newSource} onChange={(e) => setNewSource(e.target.value)} placeholder="Calendar" />
+                </div>
               </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Source</label>
-                <input className="input" value={newSource} onChange={(e) => setNewSource(e.target.value)} placeholder="Calendar" />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Email</label>
+                  <input className="input" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Phone</label>
+                  <input className="input" value={newPhone} onChange={(e) => setNewPhone(e.target.value)} />
+                </div>
               </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Email</label>
-                <input className="input" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Phone</label>
-                <input className="input" value={newPhone} onChange={(e) => setNewPhone(e.target.value)} />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Setter Name</label>
-                <input className="input" value={newSetter} onChange={(e) => setNewSetter(e.target.value)} />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Closer Name</label>
-                <input className="input" value={newCloser} onChange={(e) => setNewCloser(e.target.value)} />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Setter Name</label>
+                  <input className="input" value={newSetter} onChange={(e) => setNewSetter(e.target.value)} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Closer Name</label>
+                  <input className="input" value={newCloser} onChange={(e) => setNewCloser(e.target.value)} />
+                </div>
               </div>
             </div>
           )}
@@ -485,15 +479,15 @@ function MeetingDetailModal({
     (lead.commissionPercent / 100);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-4 sm:pt-12">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-start justify-center pt-0 sm:pt-12">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[85vh] overflow-y-auto z-10 mx-2">
-        <div className="sticky top-0 bg-white border-b px-4 py-3 flex items-center justify-between">
+      <div className="relative bg-white rounded-t-xl sm:rounded-lg shadow-xl w-full sm:max-w-lg max-h-[90vh] sm:max-h-[85vh] overflow-y-auto z-10 sm:mx-2">
+        <div className="sticky top-0 bg-white border-b px-4 py-3 flex items-center justify-between rounded-t-xl sm:rounded-t-lg">
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: statusColors[lead.leadStatus] || "#999" }} />
             <h2 className="font-bold truncate">{lead.leadName}</h2>
           </div>
-          <button onClick={onClose} className="p-2 sm:p-1 hover:bg-gray-100 rounded shrink-0"><X size={18} /></button>
+          <button onClick={onClose} className="p-2 sm:p-1 hover:bg-gray-100 rounded-lg shrink-0"><X size={18} /></button>
         </div>
 
         <div className="p-4 space-y-4 text-sm">

@@ -95,8 +95,14 @@ export default function KanbanBoard({
         </div>
       </div>
 
+      <div className="sm:hidden flex items-center gap-1 mb-2 text-[10px] text-zinc-400">
+        <span className="inline-block w-4 h-[2px] bg-zinc-300 rounded" />
+        <span>Scorri per vedere tutte le colonne</span>
+        <span className="inline-block w-4 h-[2px] bg-zinc-300 rounded" />
+      </div>
+
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="flex gap-2 sm:gap-3 pb-4 kanban-scroll">
+        <div className="flex gap-2 sm:gap-3 pb-4 kanban-scroll snap-x snap-mandatory">
           {columns.map((col) => {
             const colLeads = leads.filter((l) => l.leadStatus === col);
             return (
@@ -105,7 +111,7 @@ export default function KanbanBoard({
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`flex-1 min-w-0 rounded-lg ${
+                    className={`min-w-[260px] sm:min-w-0 sm:flex-1 rounded-lg snap-start ${
                       snapshot.isDraggingOver ? "bg-gray-100" : "bg-gray-50"
                     } p-2 sm:p-3`}
                   >

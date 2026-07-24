@@ -118,20 +118,20 @@ export default function LeadModal({ lead, onClose, onSave, onDelete }: LeadModal
     (form.commissionPercent / 100);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-4 sm:pt-10">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-start justify-center pt-0 sm:pt-10">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto z-10 mx-2">
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between z-10">
+      <div className="relative bg-white rounded-t-xl sm:rounded-lg shadow-xl w-full sm:max-w-2xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto z-10 sm:mx-2">
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between z-10 rounded-t-xl sm:rounded-t-lg">
           <h2 className="text-lg font-bold">
             {isEditing ? "Edit Lead" : "New Lead"}
           </h2>
-          <button onClick={onClose} className="p-2 sm:p-1 hover:bg-gray-100 rounded">
+          <button onClick={onClose} className="p-2 sm:p-1 hover:bg-gray-100 rounded-lg">
             <X size={20} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Lead Name *</label>
               <input className="input" value={form.leadName} onChange={(e) => update("leadName", e.target.value)} required />

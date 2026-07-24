@@ -29,7 +29,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     <>
       <Navigation />
       <AnnouncementBanner />
-      <main className="mx-auto px-4 py-6 min-h-[calc(100vh-10rem)]">{children}</main>
+      <main className="mx-auto px-3 sm:px-4 py-4 sm:py-6 min-h-[calc(100vh-10rem)]">{children}</main>
       <footer className="border-t border-zinc-200 dark:border-zinc-800 py-3 px-4">
         <CertBadges />
       </footer>

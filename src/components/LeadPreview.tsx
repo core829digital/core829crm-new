@@ -41,10 +41,10 @@ export default function LeadPreview({ lead, onClose, onEdit }: LeadPreviewProps)
     Math.floor((now - new Date(lead.lastTouchDate).getTime()) / 86400000) >= 7;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-4 sm:pt-12">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-start justify-center pt-0 sm:pt-12">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[85vh] overflow-y-auto z-10 mx-2">
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between z-10 rounded-t-lg">
+      <div className="relative bg-white rounded-t-xl sm:rounded-lg shadow-xl w-full sm:max-w-lg max-h-[92vh] sm:max-h-[85vh] overflow-y-auto z-10 sm:mx-2">
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between z-10 rounded-t-xl sm:rounded-t-lg">
           <div className="flex items-center gap-2 min-w-0">
             <h2 className="font-bold text-base truncate">{lead.leadName}</h2>
             <span className={`badge shrink-0 ${statusColors[lead.leadStatus] || "badge-gray"}`}>
@@ -59,7 +59,7 @@ export default function LeadPreview({ lead, onClose, onEdit }: LeadPreviewProps)
               <Edit3 size={14} />
               Edit
             </button>
-            <button onClick={onClose} className="p-2 sm:p-1.5 hover:bg-gray-100 rounded ml-1">
+            <button onClick={onClose} className="p-2 sm:p-1.5 hover:bg-gray-100 rounded-lg ml-1">
               <X size={18} />
             </button>
           </div>
@@ -192,11 +192,11 @@ export default function LeadPreview({ lead, onClose, onEdit }: LeadPreviewProps)
           </div>
         </div>
 
-        <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-4 py-3 flex justify-end gap-2 rounded-b-lg">
-          <button onClick={onClose} className="btn btn-secondary text-xs">
+        <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-4 py-3 flex justify-end gap-2 rounded-b-xl sm:rounded-b-lg">
+          <button onClick={onClose} className="btn btn-secondary text-xs py-2.5 sm:py-1.5">
             Close
           </button>
-          <button onClick={onEdit} className="btn btn-primary text-xs flex items-center gap-1.5">
+          <button onClick={onEdit} className="btn btn-primary text-xs flex items-center gap-1.5 py-2.5 sm:py-1.5">
             <Edit3 size={14} />
             Edit Lead
           </button>
