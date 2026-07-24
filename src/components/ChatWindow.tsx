@@ -68,6 +68,17 @@ export default function ChatWindow({
   const addReaction = useMutation(api.messages.addReaction);
   const deleteMessage = useMutation(api.messages.remove);
 
+  const replyIds = messages
+    .filter((m) => m.replyTo)
+    .map((m) => m.replyTo!);
+  const uniqueReplies = [...new Set(replyIds.map((id) => id))] as Id<"messages">[];
+  const replyMessages = useQuery(api.messages.getMessagesByIds, {
+    ids: uniqueReplies,
+  });
+  const replyMap = new Map(
+    (replyMessages || []).map((m: any) => [m._id, m])
+  );
+
   useEffect(() => {
     if (!result) return;
 
@@ -194,11 +205,16 @@ export default function ChatWindow({
                     {msg.senderName}
                   </p>
                 )}
-                {msg.replyTo && (
-                  <div className="text-[10px] opacity-60 mb-1 border-l-2 pl-2 truncate">
-                    Replying to a message
-                  </div>
-                )}
+                {msg.replyTo && (() => {
+                  const replied = replyMap.get(msg.replyTo!);
+                  return (
+                    <div className="text-[10px] opacity-60 mb-1 border-l-2 pl-2 truncate">
+                      {replied?.deletedAt
+                        ? "Reply to a deleted message"
+                        : `Reply to ${replied?.senderName || "..."}: ${(replied?.content || "").slice(0, 60)}`}
+                    </div>
+                  );
+                })()}
                 <div className="text-sm whitespace-pre-wrap break-words">
                   {msg.content}
                 </div>

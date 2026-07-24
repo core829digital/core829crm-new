@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useMutation } from "convex/react";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
-import { Send, Paperclip, Loader2, X } from "lucide-react";
+import { Send, Paperclip, Loader2, X, AlertCircle } from "lucide-react";
 
 export default function ChatInput({
   conversationId,
@@ -19,6 +19,7 @@ export default function ChatInput({
   const [sending, setSending] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -46,6 +47,7 @@ export default function ChatInput({
     const trimmed = text.trim();
     if ((!trimmed && !file) || sending) return;
 
+    setError("");
     setSending(true);
     try {
       let storageId: Id<"_storage"> | undefined;
@@ -53,6 +55,9 @@ export default function ChatInput({
       let fileType: string | undefined;
 
       if (file) {
+        if (file.size > 10 * 1024 * 1024) {
+          throw new Error("File too large (max 10 MB)");
+        }
         setUploading(true);
         const uploadUrl = await generateUrl();
         const resp = await fetch(uploadUrl, {
@@ -60,7 +65,8 @@ export default function ChatInput({
           headers: { "Content-Type": file.type },
           body: file,
         });
-        storageId = await resp.json();
+        const result = await resp.json();
+        storageId = result.storageId;
         fileName = file.name;
         fileType = file.type;
         setUploading(false);
@@ -79,7 +85,8 @@ export default function ChatInput({
       setText("");
       setFile(null);
       setTyping({ conversationId, userId, userName, isTyping: false });
-    } catch {
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to send message");
     } finally {
       setSending(false);
       inputRef.current?.focus();
@@ -95,6 +102,12 @@ export default function ChatInput({
 
   return (
     <div className="border-t border-zinc-200 p-3 bg-white">
+      {error && (
+        <div className="flex items-center gap-1.5 mb-2 px-2 py-1.5 bg-red-50 rounded-md text-xs text-red-600">
+          <AlertCircle size={12} />
+          {error}
+        </div>
+      )}
       {file && (
         <div className="flex items-center gap-2 mb-2 px-2 py-1.5 bg-zinc-50 rounded-md text-xs">
           <Paperclip size={12} className="text-zinc-400" />

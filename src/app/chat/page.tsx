@@ -42,7 +42,7 @@ export default function ChatPage() {
       {selectedId ? (
         <ChatWindow key={selectedId} conversationId={selectedId} />
       ) : (
-        <div className="flex-1 flex items-center justify-center bg-[#fafafa] dark:bg-zinc-900">
+        <div className="flex-1 flex items-center justify-center bg-[#fafafa]">
           <div className="text-center text-zinc-400">
             <MessageSquare size={40} className="mx-auto mb-3 opacity-30" />
             <p className="text-sm font-medium">Select a conversation</p>

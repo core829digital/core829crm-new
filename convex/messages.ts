@@ -59,7 +59,7 @@ export const send = mutation({
     attachmentType: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const member = await assertMember(ctx, args.conversationId, args.userId);
+    await assertMember(ctx, args.conversationId, args.userId);
 
     if (!args.content.trim() && !args.attachmentStorageId) {
       throw new Error("Message content or attachment required");
@@ -109,12 +109,6 @@ export const send = mutation({
     }
 
     return messageId;
-  },
-});
-
-export const generateUploadUrl = mutation({
-  handler: async (ctx) => {
-    return await ctx.storage.generateUploadUrl();
   },
 });
 
@@ -262,6 +256,7 @@ export const remove = mutation({
 
     await ctx.db.patch(args.messageId, {
       content: "",
+      reactions: [],
       deletedAt: new Date().toISOString(),
     });
 
@@ -278,6 +273,22 @@ export const remove = mutation({
 export const generateAttachmentUploadUrl = mutation({
   handler: async (ctx) => {
     return await ctx.storage.generateUploadUrl();
+  },
+});
+
+export const getMessagesByIds = query({
+  args: { ids: v.array(v.id("messages")) },
+  handler: async (ctx, args) => {
+    if (args.ids.length === 0) return [];
+    const results = await Promise.all(
+      args.ids.map((id) => ctx.db.get(id))
+    );
+    return results.filter(Boolean).map((m) => ({
+      _id: m!._id,
+      senderName: m!.senderName,
+      content: m!.content,
+      deletedAt: m!.deletedAt,
+    }));
   },
 });
 
