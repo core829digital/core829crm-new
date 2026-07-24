@@ -10,6 +10,7 @@ import { MessageSquare, Plus, Search, Users, Loader2 } from "lucide-react";
 type ConvSummary = {
   _id: Id<"conversations">;
   name?: string;
+  displayName?: string;
   type: "direct" | "group" | "lead";
   lastMessagePreview?: string;
   lastMessageAt?: string;
@@ -97,13 +98,13 @@ export default function ChatSidebar({
                       <Users size={14} className="text-zinc-500" />
                     ) : (
                       <span className="text-xs font-medium text-zinc-500">
-                        {(conv.name || "?").charAt(0).toUpperCase()}
+                        {(conv.displayName || "").charAt(0).toUpperCase()}
                       </span>
                     )}
                   </div>
                   <div className="min-w-0">
                     <div className="text-xs font-medium truncate">
-                      {conv.name || "Direct Message"}
+                      {conv.displayName || "Direct Message"}
                     </div>
                     {conv.lastMessagePreview && (
                       <div className="text-[10px] text-zinc-400 truncate mt-0.5">

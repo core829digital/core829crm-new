@@ -143,8 +143,7 @@ export default function ChatWindow({
     );
   }
 
-  const otherMembers = (members || []).filter((m) => m.userId !== user.userId);
-  const displayName = conv.name || otherMembers.map((m) => m.userName).join(", ") || "Chat";
+  const displayName = (conv as any).displayName || conv.name || "Chat";
 
   return (
     <div className="flex-1 flex flex-col">
@@ -154,7 +153,10 @@ export default function ChatWindow({
           <p className="text-[10px] text-zinc-400">
             {conv.type === "group" || conv.type === "lead"
               ? `${(members || []).length} members`
-              : otherMembers.map((m) => `${m.userName} (${m.userId})`).join(", ")}
+              : (members || [])
+                .filter((m) => m.userId !== user.userId)
+                .map((m) => `${m.userName} (${m.userId})`)
+                .join(", ")}
           </p>
         </div>
       </div>

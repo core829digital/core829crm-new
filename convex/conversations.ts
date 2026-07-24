@@ -37,7 +37,7 @@ export const listForUser = query({
       return bTime.localeCompare(aTime);
     });
 
-    const unreadCounts = await Promise.all(
+    const result = await Promise.all(
       valid.map(async (conv) => {
         const receipt = await ctx.db
           .query("readReceipts")
@@ -53,14 +53,26 @@ export const listForUser = query({
           )
           .filter((q) => q.neq(q.field("senderId"), args.userId))
           .collect();
-        return { conversationId: conv!._id, count: unread.length };
+
+        let displayName = conv!.name || "";
+        if (conv!.type === "direct") {
+          const members = await ctx.db
+            .query("conversationMembers")
+            .withIndex("by_conversation", (q) => q.eq("conversationId", conv!._id))
+            .collect();
+          const other = members.find((m) => m.userId !== args.userId);
+          displayName = other?.userName || displayName;
+        }
+
+        return {
+          ...conv,
+          displayName,
+          unreadCount: unread.length,
+        };
       })
     );
 
-    return valid.map((conv) => ({
-      ...conv,
-      unreadCount: unreadCounts.find((u) => u.conversationId === conv!._id)?.count || 0,
-    }));
+    return result;
   },
 });
 
@@ -71,7 +83,20 @@ export const getById = query({
   },
   handler: async (ctx, args) => {
     await assertMember(ctx, args.conversationId, args.userId);
-    return await ctx.db.get(args.conversationId);
+    const conv = await ctx.db.get(args.conversationId);
+    if (!conv) return null;
+
+    let displayName = conv.name || "";
+    if (conv.type === "direct") {
+      const members = await ctx.db
+        .query("conversationMembers")
+        .withIndex("by_conversation", (q) => q.eq("conversationId", conv._id))
+        .collect();
+      const other = members.find((m) => m.userId !== args.userId);
+      displayName = other?.userName || displayName;
+    }
+
+    return { ...conv, displayName };
   },
 });
 
