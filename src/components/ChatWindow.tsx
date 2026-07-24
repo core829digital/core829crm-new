@@ -8,7 +8,7 @@ import { useAuth } from "./AuthContext";
 import ChatInput from "./ChatInput";
 import { Loader2, ArrowDown, Trash2, Smile, FileText, Image as ImageIcon } from "lucide-react";
 
-const EMOJI_LIST = ["👍", "❤️", "😂", "😮", "😢", "🙏", "🔥", "✅"];
+const EMOJI_LIST = ["\u{1F44D}", "\u2764\uFE0F", "\u{1F602}", "\u{1F62E}", "\u{1F622}", "\u{1F64F}", "\u{1F525}", "\u2705"];
 
 type MessageDoc = {
   _id: Id<"messages">;
@@ -67,11 +67,6 @@ export default function ChatWindow({
   const markRead = useMutation(api.messages.markRead);
   const addReaction = useMutation(api.messages.addReaction);
   const deleteMessage = useMutation(api.messages.remove);
-  const getAttachmentUrl = useQuery(api.messages.getAttachmentUrl, {
-    storageId: messages.find((m) => m.attachmentStorageId)?.attachmentStorageId ?? ("" as Id<"_storage">),
-  });
-
-  const [attachmentUrls, setAttachmentUrls] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!result) return;
@@ -142,7 +137,7 @@ export default function ChatWindow({
 
   return (
     <div className="flex-1 flex flex-col">
-      <div className="px-4 py-2.5 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 flex items-center justify-between">
+      <div className="px-4 py-2.5 border-b border-zinc-200 bg-white flex items-center justify-between">
         <div>
           <h3 className="text-sm font-semibold">{displayName}</h3>
           <p className="text-[10px] text-zinc-400">
@@ -155,7 +150,7 @@ export default function ChatWindow({
 
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto px-4 py-3 space-y-2 bg-[#fafafa] dark:bg-zinc-900"
+        className="flex-1 overflow-y-auto px-4 py-3 space-y-2 bg-[#fafafa]"
       >
         {cursor && result?.hasMore && (
           <div className="flex justify-center py-2">
@@ -191,7 +186,7 @@ export default function ChatWindow({
                 className={`max-w-[75%] relative ${
                   isMe
                     ? "bg-black text-white rounded-2xl rounded-br-md"
-                    : "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-2xl rounded-bl-md border border-zinc-200 dark:border-zinc-700"
+                    : "bg-white text-zinc-900 rounded-2xl rounded-bl-md border border-zinc-200"
                 } px-3.5 py-2`}
               >
                 {!isMe && (
@@ -239,7 +234,7 @@ export default function ChatWindow({
                         }
                         className={`text-xs px-1.5 py-0.5 rounded-full border ${
                           r.userIds.includes(user.userId)
-                            ? "bg-zinc-200 dark:bg-zinc-600 border-zinc-300 dark:border-zinc-500"
+                            ? "bg-zinc-200 border-zinc-300"
                             : "border-transparent hover:border-zinc-300"
                         }`}
                       >
@@ -259,7 +254,7 @@ export default function ChatWindow({
                       <Smile size={12} />
                     </button>
                     {showEmoji === msg._id && (
-                      <div className={`absolute bottom-full mb-1 flex gap-0.5 p-1 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 shadow-lg ${isMe ? "right-0" : "left-0"}`}>
+                      <div className={`absolute bottom-full mb-1 flex gap-0.5 p-1 bg-white rounded-lg border border-zinc-200 shadow-lg ${isMe ? "right-0" : "left-0"}`}>
                         {EMOJI_LIST.map((e) => (
                           <button
                             key={e}
@@ -267,7 +262,7 @@ export default function ChatWindow({
                               addReaction({ userId: user.userId, messageId: msg._id, emoji: e });
                               setShowEmoji(null);
                             }}
-                            className="hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded p-0.5 text-sm"
+                            className="hover:bg-zinc-100 rounded p-0.5 text-sm"
                           >
                             {e}
                           </button>

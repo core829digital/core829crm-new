@@ -80,7 +80,6 @@ export default function ChatInput({
       setFile(null);
       setTyping({ conversationId, userId, userName, isTyping: false });
     } catch {
-      // Message will show error state
     } finally {
       setSending(false);
       inputRef.current?.focus();
@@ -95,11 +94,11 @@ export default function ChatInput({
   };
 
   return (
-    <div className="border-t border-zinc-200 dark:border-zinc-800 p-3 bg-white dark:bg-zinc-950">
+    <div className="border-t border-zinc-200 p-3 bg-white">
       {file && (
-        <div className="flex items-center gap-2 mb-2 px-2 py-1.5 bg-zinc-50 dark:bg-zinc-900 rounded-md text-xs">
+        <div className="flex items-center gap-2 mb-2 px-2 py-1.5 bg-zinc-50 rounded-md text-xs">
           <Paperclip size={12} className="text-zinc-400" />
-          <span className="text-zinc-600 dark:text-zinc-300 truncate flex-1">{file.name}</span>
+          <span className="text-zinc-600 truncate flex-1">{file.name}</span>
           <span className="text-zinc-400">{(file.size / 1024).toFixed(0)} KB</span>
           <button
             onClick={() => setFile(null)}
@@ -112,7 +111,7 @@ export default function ChatInput({
       <div className="flex items-end gap-2">
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors shrink-0"
+          className="p-2 text-zinc-400 hover:text-zinc-600 transition-colors shrink-0"
           disabled={uploading}
         >
           <Paperclip size={16} />
@@ -135,7 +134,7 @@ export default function ChatInput({
             onKeyDown={handleKeyDown}
             placeholder="Type a message..."
             rows={1}
-            className="w-full resize-none border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm bg-transparent focus:outline-none focus:ring-1 focus:ring-black/20 dark:focus:ring-white/20 max-h-[120px]"
+            className="w-full resize-none border border-zinc-300 rounded-lg px-3 py-2 text-sm bg-transparent focus:outline-none focus:ring-1 focus:ring-black/20 max-h-[120px]"
           />
         </div>
         <button

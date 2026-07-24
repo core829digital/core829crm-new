@@ -73,20 +73,20 @@ export default function NewConversationModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-xl w-full max-w-md mx-4 max-h-[80vh] flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 max-h-[80vh] flex flex-col">
+        <div className="flex items-center justify-between p-4 border-b border-zinc-200">
           <h2 className="text-sm font-semibold">New Conversation</h2>
           <button onClick={onClose} className="p-1 text-zinc-400 hover:text-zinc-600 transition-colors">
             <X size={16} />
           </button>
         </div>
 
-        <div className="flex border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex border-b border-zinc-200">
           <button
             onClick={() => setTab("direct")}
             className={`flex-1 py-2.5 text-xs font-medium text-center transition-colors ${
               tab === "direct"
-                ? "border-b-2 border-black dark:border-white text-black dark:text-white"
+                ? "border-b-2 border-black text-black"
                 : "text-zinc-400 hover:text-zinc-600"
             }`}
           >
@@ -97,7 +97,7 @@ export default function NewConversationModal({
             onClick={() => setTab("group")}
             className={`flex-1 py-2.5 text-xs font-medium text-center transition-colors ${
               tab === "group"
-                ? "border-b-2 border-black dark:border-white text-black dark:text-white"
+                ? "border-b-2 border-black text-black"
                 : "text-zinc-400 hover:text-zinc-600"
             }`}
           >
@@ -112,7 +112,7 @@ export default function NewConversationModal({
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
               placeholder="Group name..."
-              className="w-full border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm bg-transparent focus:outline-none focus:ring-1 focus:ring-black/20"
+              className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm bg-transparent focus:outline-none focus:ring-1 focus:ring-black/20"
             />
           )}
 
@@ -122,7 +122,7 @@ export default function NewConversationModal({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search users..."
-              className="w-full pl-8 pr-3 py-1.5 text-xs border border-zinc-300 dark:border-zinc-700 rounded-md bg-transparent focus:outline-none focus:ring-1 focus:ring-black/20"
+              className="w-full pl-8 pr-3 py-1.5 text-xs border border-zinc-300 rounded-md bg-transparent focus:outline-none focus:ring-1 focus:ring-black/20"
             />
           </div>
 
@@ -140,11 +140,11 @@ export default function NewConversationModal({
                   onClick={() => toggleUser(u.userId)}
                   className={`w-full text-left flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
                     selectedUsers.includes(u.userId)
-                      ? "bg-zinc-100 dark:bg-zinc-800"
-                      : "hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                      ? "bg-zinc-100"
+                      : "hover:bg-zinc-50"
                   }`}
                 >
-                  <div className="w-8 h-8 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-zinc-200 flex items-center justify-center shrink-0">
                     <span className="text-xs font-medium text-zinc-500">
                       {u.name.charAt(0)}{u.surname.charAt(0)}
                     </span>
@@ -154,8 +154,8 @@ export default function NewConversationModal({
                     <div className="text-[10px] text-zinc-400">{u.role} &middot; {u.userId}</div>
                   </div>
                   {selectedUsers.includes(u.userId) && (
-                    <div className="ml-auto w-4 h-4 rounded-full bg-black dark:bg-white flex items-center justify-center">
-                      <X size={10} className="text-white dark:text-black" />
+                    <div className="ml-auto w-4 h-4 rounded-full bg-black flex items-center justify-center">
+                      <X size={10} className="text-white" />
                     </div>
                   )}
                 </button>
@@ -164,7 +164,7 @@ export default function NewConversationModal({
           </div>
         </div>
 
-        <div className="p-4 border-t border-zinc-200 dark:border-zinc-800">
+        <div className="p-4 border-t border-zinc-200">
           <button
             onClick={handleCreate}
             disabled={!canCreate || creating}

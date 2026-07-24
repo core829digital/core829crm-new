@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useState } from "react";
+import { useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { useAuth } from "./AuthContext";
@@ -44,20 +44,13 @@ export default function ChatSidebar({
   });
 
   return (
-    <div className="w-80 border-r border-zinc-200 dark:border-zinc-800 flex flex-col bg-white dark:bg-zinc-950">
-      <div className="p-3 border-b border-zinc-200 dark:border-zinc-800">
+    <div className="w-80 border-r border-zinc-200 flex flex-col bg-white">
+      <div className="p-3 border-b border-zinc-200">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold flex items-center gap-2">
             <MessageSquare size={16} />
             Chat
           </h2>
-          <div className="flex items-center gap-1">
-            {conversations !== undefined && (
-              <span className="text-[10px] text-zinc-400 font-medium">
-                {(conversations as ConvSummary[]).length}
-              </span>
-            )}
-          </div>
         </div>
         <div className="relative">
           <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400" />
@@ -65,14 +58,14 @@ export default function ChatSidebar({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search conversations..."
-            className="w-full pl-8 pr-3 py-1.5 text-xs border border-zinc-300 dark:border-zinc-700 rounded-md bg-transparent focus:outline-none focus:ring-1 focus:ring-black/20 dark:focus:ring-white/20"
+            className="w-full pl-8 pr-3 py-1.5 text-xs border border-zinc-300 rounded-md bg-transparent focus:outline-none focus:ring-1 focus:ring-black/20"
           />
         </div>
       </div>
 
       <button
         onClick={onStartNew}
-        className="mx-3 mt-2 flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium border border-dashed border-zinc-300 dark:border-zinc-700 rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
+        className="mx-3 mt-2 flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium border border-dashed border-zinc-300 rounded-md hover:bg-zinc-50 transition-colors"
       >
         <Plus size={14} />
         New conversation
@@ -93,15 +86,13 @@ export default function ChatSidebar({
             <button
               key={conv._id}
               onClick={() => onSelect(conv._id)}
-              className={`w-full text-left px-3 py-2.5 border-b border-zinc-100 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors ${
-                selectedId === conv._id
-                  ? "bg-zinc-100 dark:bg-zinc-800"
-                  : ""
+              className={`w-full text-left px-3 py-2.5 border-b border-zinc-100 hover:bg-zinc-50 transition-colors ${
+                selectedId === conv._id ? "bg-zinc-100" : ""
               }`}
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-8 h-8 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-zinc-200 flex items-center justify-center shrink-0">
                     {conv.type === "group" || conv.type === "lead" ? (
                       <Users size={14} className="text-zinc-500" />
                     ) : (
