@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { AuthProvider, useAuth } from "./AuthContext";
 import Navigation from "./Navigation";
 import AnnouncementBanner from "./AnnouncementBanner";
-import CertBadges from "./CertBadges";
+
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -30,9 +30,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
       <Navigation />
       <AnnouncementBanner />
       <main className="mx-auto px-3 sm:px-4 py-4 sm:py-6 min-h-[calc(100vh-10rem)]">{children}</main>
-      <footer className="border-t border-zinc-200 dark:border-zinc-800 py-3 px-4">
-        <CertBadges />
-      </footer>
+      
     </>
   );
 }
