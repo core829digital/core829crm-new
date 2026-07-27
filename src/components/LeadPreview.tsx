@@ -1,6 +1,6 @@
 "use client";
 
-import { X, Edit3, DollarSign, CalendarDays, Phone, User, Tag, Building2, Mail, AlertTriangle, TrendingUp } from "lucide-react";
+import { X, Edit3, DollarSign, CalendarDays, Phone, User, Tag, Building2, Mail, AlertTriangle, TrendingUp, Globe, Link } from "lucide-react";
 import { useState } from "react";
 import { Doc } from "convex/_generated/dataModel";
 
@@ -98,6 +98,37 @@ export default function LeadPreview({ lead, onClose, onEdit }: LeadPreviewProps)
               </div>
             </div>
           </div>
+
+          {(lead.website || (lead.socialLinks && lead.socialLinks.length > 0 && lead.socialLinks[0] !== "")) && (
+            <div className="border-t pt-3">
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                <Globe size={12} className="inline mr-1" />
+                Online
+              </h3>
+              <div className="space-y-1.5 text-xs">
+                {lead.website && (
+                  <div className="flex items-center gap-2">
+                    <Globe size={12} className="text-gray-400 shrink-0" />
+                    <a href={lead.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate">
+                      {lead.website}
+                    </a>
+                  </div>
+                )}
+                {lead.socialLinks && lead.socialLinks.filter(Boolean).length > 0 && (
+                  <div className="space-y-1">
+                    {lead.socialLinks.filter(Boolean).map((link, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <Link size={12} className="text-gray-400 shrink-0" />
+                        <a href={link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate">
+                          {link}
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="border-t pt-3">
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Sales Team</h3>

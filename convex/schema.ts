@@ -70,6 +70,8 @@ export default defineSchema({
     earnings: v.number(),
     lastTouchDate: v.optional(v.string()),
     notes: v.optional(v.string()),
+    website: v.optional(v.string()),
+    socialLinks: v.optional(v.array(v.string())),
   }).index("by_status", ["leadStatus"])
     .index("by_setter", ["setterName"])
     .index("by_closer", ["closerName"])

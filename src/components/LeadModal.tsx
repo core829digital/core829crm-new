@@ -60,6 +60,8 @@ interface LeadData {
   refundClawbackAmount: number;
   commissionPercent: number;
   lastTouchDate?: string;
+  website?: string;
+  socialLinks?: string[];
 }
 
 interface LeadModalProps {
@@ -96,6 +98,8 @@ function defaultForm(lead?: LeadData | null): LeadData {
     refundClawbackAmount: lead?.refundClawbackAmount ?? 0,
     commissionPercent: lead?.commissionPercent ?? 0,
     lastTouchDate: lead?.lastTouchDate || "",
+    website: lead?.website || "",
+    socialLinks: lead?.socialLinks?.length ? [...lead.socialLinks] : [""],
   };
 }
 
@@ -167,6 +171,53 @@ export default function LeadModal({ lead, onClose, onSave, onDelete }: LeadModal
                   <option key={s} value={s}>{s}</option>
                 ))}
               </select>
+            </div>
+          </div>
+
+          <div className="border-t pt-4">
+            <h3 className="text-sm font-semibold mb-3">Online</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Website</label>
+                <input className="input" type="url" placeholder="https://example.com" value={form.website || ""} onChange={(e) => update("website", e.target.value)} />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Social Links</label>
+                <div className="space-y-2">
+                  {(form.socialLinks ?? [""]).map((link, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <input
+                        className="input flex-1"
+                        type="url"
+                        placeholder="https://linkedin.com/in/..."
+                        value={link}
+                        onChange={(e) => {
+                          const next = [...(form.socialLinks ?? [""])];
+                          next[i] = e.target.value;
+                          setForm((prev) => ({ ...prev, socialLinks: next }));
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const next = (form.socialLinks ?? [""]).filter((_, j) => j !== i);
+                          setForm((prev) => ({ ...prev, socialLinks: next.length ? next : [""] }));
+                        }}
+                        className="text-red-500 hover:text-red-700 shrink-0 p-1"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setForm((prev) => ({ ...prev, socialLinks: [...(prev.socialLinks ?? [""]), ""] }))}
+                    className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    + Add Social Link
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
