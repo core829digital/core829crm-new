@@ -1,5 +1,35 @@
 @import "tailwindcss";
 
+/* Saans (Displaay) e' un font commerciale: se e' installato sul dispositivo viene usato direttamente,
+   altrimenti si usa Inter (self-hosted da next/font). Configurazione identica ad Andromedia Web. */
+@font-face {
+  font-family: "Saans";
+  src: local("Saans"), local("Saans Regular"), local("Saans-Regular");
+  font-weight: 300 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Saans Display";
+  src: local("Saans Display"), local("SaansDisplay-Regular"), local("Saans Display Regular"), local("Saans");
+  font-weight: 300 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Saans Text";
+  src: local("Saans Text"), local("SaansText-Regular"), local("Saans Text Regular"), local("Saans");
+  font-weight: 300 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme inline {
+  --font-sans: "Saans Text", "Saans", var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Saans Display", "Saans", var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #000000;
@@ -13,13 +43,20 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: "Saans Text", "Saans", var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   -webkit-tap-highlight-color: transparent;
   -webkit-overflow-scrolling: touch;
 }
 
 input, select, textarea, button {
   font-size: 16px;
+}
+
+h1, h2, h3, h4 {
+  font-family: "Saans Display", "Saans", var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 560; /* come Andromedia Web */
+  letter-spacing: -0.03em;
+  text-wrap: balance;
 }
 
 * {

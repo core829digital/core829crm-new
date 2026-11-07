@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import ConvexWrapper from "@/components/ConvexWrapper";
 import AppShell from "@/components/AppShell";
@@ -26,6 +27,20 @@ export const viewport: Viewport = {
   themeColor: "#000000",
 };
 
+// Stesso stack di Andromedia Web e di core829.net: "Saans" se installato sul dispositivo, altrimenti Inter
+// self-hosted da next/font (font variabile: normale, bold e ogni peso intermedio), piu' JetBrains Mono.
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
+  subsets: ["latin"],
+  weight: ["400", "500"],
+});
+
 export const dynamic = "force-dynamic";
 
 export default function RootLayout({
@@ -34,7 +49,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <body className="min-h-screen bg-[#fafafa]">
         <ConvexWrapper>
           <AppShell>{children}</AppShell>
