@@ -163,7 +163,7 @@ export default function ChatWindow({
 
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto px-4 py-3 space-y-2 bg-[#fafafa]"
+        className="flex-1 overflow-y-auto px-4 py-3 space-y-2 bg-[#f6f8fa]"
       >
         {cursor && result?.hasMore && (
           <div className="flex justify-center py-2">

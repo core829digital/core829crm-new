@@ -24,7 +24,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   minimumScale: 1,
   viewportFit: "cover",
-  themeColor: "#000000",
+  themeColor: "#111217",
 };
 
 // Stesso stack di Andromedia Web e di core829.net: "Saans" se installato sul dispositivo, altrimenti Inter
@@ -50,7 +50,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
-      <body className="min-h-screen bg-[#fafafa]">
+      <body className="min-h-screen bg-[#f6f8fa]">
         <ConvexWrapper>
           <AppShell>{children}</AppShell>
         </ConvexWrapper>

@@ -11,7 +11,7 @@ const statusColors: Record<string, string> = {
   "Follow-Up Ongoing": "#ca8a04",
   "Meeting Follow-Up": "#2563eb",
   Won: "#16a34a",
-  Lost: "#dc2626",
+  Lost: "#ef233c",
 };
 
 const meetingStatuses = [

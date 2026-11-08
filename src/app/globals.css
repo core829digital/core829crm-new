@@ -24,6 +24,68 @@
   font-display: swap;
 }
 
+@theme {
+  /* Palette CORE829: Obsidian Black #111217, Ice Grey #DFE5EB, Racing Red #EF233C.
+     Le scale standard di Tailwind (zinc, gray, slate, neutral, red) seguono il brand: ogni classe esistente si aggiorna da sola.
+     red-600 (#E52139) e' la variante con testo bianco >= 4,5:1; red-500 e' il Racing Red puro (grafica, superfici grandi). */
+  --color-black: #111217;
+  --color-zinc-50: #f6f8fa;
+  --color-zinc-100: #eef1f5;
+  --color-zinc-200: #dfe5eb;
+  --color-zinc-300: #c8d0d9;
+  --color-zinc-400: #69727f;
+  --color-zinc-500: #566070;
+  --color-zinc-600: #4a5160;
+  --color-zinc-700: #343a46;
+  --color-zinc-800: #1f232c;
+  --color-zinc-900: #161920;
+  --color-zinc-950: #111217;
+  --color-gray-50: #f6f8fa;
+  --color-gray-100: #eef1f5;
+  --color-gray-200: #dfe5eb;
+  --color-gray-300: #c8d0d9;
+  --color-gray-400: #69727f;
+  --color-gray-500: #566070;
+  --color-gray-600: #4a5160;
+  --color-gray-700: #343a46;
+  --color-gray-800: #1f232c;
+  --color-gray-900: #161920;
+  --color-gray-950: #111217;
+  --color-slate-50: #f6f8fa;
+  --color-slate-100: #eef1f5;
+  --color-slate-200: #dfe5eb;
+  --color-slate-300: #c8d0d9;
+  --color-slate-400: #69727f;
+  --color-slate-500: #566070;
+  --color-slate-600: #4a5160;
+  --color-slate-700: #343a46;
+  --color-slate-800: #1f232c;
+  --color-slate-900: #161920;
+  --color-slate-950: #111217;
+  --color-neutral-50: #f6f8fa;
+  --color-neutral-100: #eef1f5;
+  --color-neutral-200: #dfe5eb;
+  --color-neutral-300: #c8d0d9;
+  --color-neutral-400: #69727f;
+  --color-neutral-500: #566070;
+  --color-neutral-600: #4a5160;
+  --color-neutral-700: #343a46;
+  --color-neutral-800: #1f232c;
+  --color-neutral-900: #161920;
+  --color-neutral-950: #111217;
+  --color-red-50: #fdecef;
+  --color-red-100: #fbd5d9;
+  --color-red-200: #f8b4bc;
+  --color-red-300: #f58a98;
+  --color-red-400: #f35468;
+  --color-red-500: #ef233c;
+  --color-red-600: #e52139;
+  --color-red-700: #b8132a;
+  --color-red-800: #8f0f20;
+  --color-red-900: #6b0b18;
+  --color-red-950: #45060f;
+}
+
 @theme inline {
   --font-sans: "Saans Text", "Saans", var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: "Saans Display", "Saans", var(--font-inter), ui-sans-serif, system-ui, sans-serif;
@@ -32,12 +94,12 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #000000;
-  --accent: #dc2626;
-  --accent-hover: #b91c1c;
-  --muted: #f3f4f6;
-  --muted-foreground: #6b7280;
-  --border: #e5e7eb;
+  --foreground: #111217;
+  --accent: #e52139;
+  --accent-hover: #b8132a;
+  --muted: #f2f5f8;
+  --muted-foreground: #4a5160;
+  --border: #dfe5eb;
 }
 
 html {
@@ -95,7 +157,7 @@ h1, h2, h3, h4 {
 }
 
 .btn-secondary:hover {
-  background: #e5e7eb;
+  background: #dfe5eb;
 }
 
 .input {
@@ -144,8 +206,8 @@ h1, h2, h3, h4 {
 }
 
 .badge-red {
-  background: #fef2f2;
-  color: #dc2626;
+  background: #fdecef;
+  color: #b8132a;
 }
 
 .badge-green {
