@@ -24,7 +24,12 @@ export async function POST(request: NextRequest) {
     response.headers.append("Set-Cookie", sessionCookie(res.sessionSecret, res.maxAgeSeconds));
     return response;
   } catch (e) {
-    const tooMany = e instanceof Error && /Too many/.test(e.message);
-    return NextResponse.json({ ok: false, error: tooMany ? "Too many attempts" : "Login unavailable" }, { status: tooMany ? 429 : 503, headers: NO_STORE });
+    const message = e instanceof Error ? e.message : String(e);
+    const tooMany = /Too many/.test(message);
+    // Il motivo vero resta nei log del server (Vercel → Logs); al browser va solo una categoria generica.
+    if (!tooMany) console.error("[auth/login] errore verso Convex:", message.slice(0, 500));
+    const noUrl = /NEXT_PUBLIC_CONVEX_URL is not set/.test(message);
+    const code = tooMany ? "too_many" : noUrl ? "no_url" : /Could not find public function|not found/i.test(message) ? "not_deployed" : "db_error";
+    return NextResponse.json({ ok: false, error: tooMany ? "Too many attempts" : "Login unavailable", code }, { status: tooMany ? 429 : 503, headers: NO_STORE });
   }
 }
