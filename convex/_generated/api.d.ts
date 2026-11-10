@@ -10,6 +10,7 @@
 
 import type * as activityLogs from "../activityLogs.js";
 import type * as announcements from "../announcements.js";
+import type * as backup from "../backup.js";
 import type * as clients from "../clients.js";
 import type * as conversations from "../conversations.js";
 import type * as crons from "../crons.js";
@@ -46,6 +47,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   activityLogs: typeof activityLogs;
   announcements: typeof announcements;
+  backup: typeof backup;
   clients: typeof clients;
   conversations: typeof conversations;
   crons: typeof crons;

@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation, useQuery } from "convex/react";
+import { useConvex, useMutation, useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
-import { Loader2, Upload, GitMerge, Copy } from "lucide-react";
+import { Loader2, Upload, GitMerge, Copy, Download, ArchiveRestore } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
 
 type Item = { id: string; name: string; company: string; email: string; phone: string };
@@ -12,20 +12,20 @@ type Group = { reasons: string[]; items: Item[] };
 
 export default function DataTools() {
   const { user } = useAuth();
-  const [tab, setTab] = useState<"dupes" | "import">("dupes");
+  const [tab, setTab] = useState<"dupes" | "import" | "backup">("dupes");
   if (user && user.userId !== "00001") return <p className="text-center py-20 text-zinc-500">Only the administrator can use the data tools.</p>;
   return (
     <div className="max-w-5xl mx-auto">
       <h1 className="text-2xl font-bold mb-1">Data tools</h1>
       <p className="text-sm text-zinc-500 mb-5">Find and merge duplicate leads/clients, and import everything from the client portal. Nothing here ever deletes a lead unless you confirm a merge.</p>
       <div className="flex gap-2 mb-5" role="tablist">
-        {([["dupes", "Duplicates", Copy], ["import", "Import from portal", Upload]] as const).map(([id, label, Icon]) => (
+        {([["dupes", "Duplicates", Copy], ["import", "Import from portal", Upload], ["backup", "Export / Backup", Download]] as const).map(([id, label, Icon]) => (
           <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium ${tab === id ? "bg-red-600 text-white" : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"}`}>
             <Icon size={15} /> {label}
           </button>
         ))}
       </div>
-      {tab === "dupes" ? <Duplicates /> : <ImportFromPortal />}
+      {tab === "dupes" ? <Duplicates /> : tab === "import" ? <ImportFromPortal /> : <BackupTools />}
     </div>
   );
 }
@@ -213,6 +213,115 @@ function ImportFromPortal() {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+type RestoreReport = {
+  dryRun: boolean; leadsCreated: number; leadsExisting: number; clientsCreated: number; clientsExisting: number; projectsCreated: number; projectsExisting: number;
+  invoicesCreated: number; invoicesExisting: number; servicesCreated: number; servicesExisting: number; tasksCreated: number;
+};
+
+/** Esporta tutto in un file (backup, e anche per il portale) e ripristina da un backup senza creare doppioni. */
+function BackupTools() {
+  const convex = useConvex();
+  const restore = useMutation(api.backup.restore);
+  const [exporting, setExporting] = useState(false);
+  const [exportMsg, setExportMsg] = useState("");
+  const [payload, setPayload] = useState<unknown>(null);
+  const [fileName, setFileName] = useState("");
+  const [report, setReport] = useState<RestoreReport | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  const doExport = async () => {
+    setExporting(true);
+    setExportMsg("");
+    try {
+      const data = await convex.query(api.backup.exportAll, {});
+      const url = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: "application/json" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `crm-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setExportMsg(`Downloaded: ${data.leads.length} leads, ${data.clients.length} clients.${data.truncated ? " WARNING: too much data, the file is incomplete." : ""}`);
+    } catch (e) {
+      setExportMsg(e instanceof Error ? e.message : "Export failed");
+    } finally {
+      setExporting(false);
+    }
+  };
+  const load = async (f: File | undefined) => {
+    setReport(null);
+    setError("");
+    if (!f) return;
+    try {
+      setPayload(JSON.parse(await f.text()));
+      setFileName(f.name);
+    } catch {
+      setPayload(null);
+      setError("This is not a valid backup file.");
+    }
+  };
+  const go = async (dryRun: boolean) => {
+    if (!payload) return;
+    if (!dryRun && !window.confirm("Restore now? Nothing is deleted; records already present are not duplicated. You can run it again safely.")) return;
+    setBusy(true);
+    setError("");
+    try {
+      setReport((await restore({ payload, dryRun })) as RestoreReport);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Restore failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="space-y-8">
+      <section className="space-y-2">
+        <h2 className="font-semibold">Export everything</h2>
+        <p className="text-sm text-zinc-500">One file with all leads, clients, projects, tasks, invoices and services. Use it as a <b>backup</b>, and in the portal (<b>Clienti → Importa dal CRM</b>) to keep the two systems connected. It contains personal data: keep it private, never put it on GitHub.</p>
+        <button onClick={() => void doExport()} disabled={exporting} className="flex items-center gap-1.5 bg-black text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-zinc-800 disabled:opacity-50">
+          {exporting ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />} Download backup (.json)
+        </button>
+        {exportMsg && <p role="status" className="text-sm text-zinc-600">{exportMsg}</p>}
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="font-semibold">Restore from a backup</h2>
+        <p className="text-sm text-zinc-500">Choose a backup file, press <b>Preview</b> (nothing is written), then <b>Restore</b>. Leads and clients already present (same email, phone or name) are recognised and not duplicated. Nothing is ever deleted.</p>
+        <label className="flex items-center gap-2 border border-dashed border-zinc-300 rounded-lg px-4 py-3 text-sm cursor-pointer hover:bg-zinc-50">
+          <Upload size={16} className="text-zinc-400" />
+          <span className={fileName ? "text-zinc-800" : "text-zinc-400"}>{fileName || "Choose the backup file (.json)"}</span>
+          <input type="file" accept=".json,application/json" className="hidden" onChange={(e) => void load(e.target.files?.[0])} />
+        </label>
+        <div className="flex gap-2">
+          <button disabled={!payload || busy} onClick={() => void go(true)} className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 hover:bg-zinc-200 disabled:opacity-50">Preview</button>
+          <button disabled={!payload || busy || !report?.dryRun} onClick={() => void go(false)} className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-black text-white hover:bg-zinc-800 disabled:opacity-50">
+            {busy ? <Loader2 size={15} className="animate-spin" /> : <ArchiveRestore size={15} />} Restore
+          </button>
+        </div>
+        {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+        {report && (
+          <div className="rounded-xl border border-zinc-200 bg-white p-4 text-sm space-y-2">
+            <p className="font-semibold">{report.dryRun ? "Preview — nothing was written yet" : "Restore completed"}</p>
+            <ul className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-1">
+              <li>New leads: <b>{report.leadsCreated}</b></li>
+              <li>Leads already there: <b>{report.leadsExisting}</b></li>
+              <li>New clients: <b>{report.clientsCreated}</b></li>
+              <li>Clients already there: <b>{report.clientsExisting}</b></li>
+              <li>New projects: <b>{report.projectsCreated}</b></li>
+              <li>Projects already there: <b>{report.projectsExisting}</b></li>
+              <li>New invoices: <b>{report.invoicesCreated}</b></li>
+              <li>Invoices already there: <b>{report.invoicesExisting}</b></li>
+              <li>New services: <b>{report.servicesCreated}</b></li>
+              <li>Services already there: <b>{report.servicesExisting}</b></li>
+            </ul>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

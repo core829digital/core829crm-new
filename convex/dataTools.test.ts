@@ -180,3 +180,58 @@ describe("importazione dal portale", () => {
     await expect(adm.mutation(api.portalImport.run, { payload: { foo: 1 }, dryRun: true })).rejects.toThrow(/Invalid file/);
   });
 });
+
+describe("backup completo", () => {
+  const seed = (t: ReturnType<typeof makeApp>) =>
+    t.run(async (ctx) => {
+      const l = await ctx.db.insert("leads", lead("Dimitri Boutourline", "Studio D", "d@x.it"));
+      await ctx.db.insert("leads", lead("Anna Verdi", "Verdi Srl", "a@v.it"));
+      const c = await ctx.db.insert("clients", { ...client("Dimitri Boutourline", "Studio D", "d@x.it"), leadId: l });
+      const p = await ctx.db.insert("projects", { clientId: c, projectName: "Sito", description: "d", status: "Active", startDate: "2026-01-01", totalValue: 500, createdAt: "x" });
+      await ctx.db.insert("projectTasks", { projectId: p, taskName: "Home", completed: true, createdAt: "x" });
+      await ctx.db.insert("invoices", { projectId: p, invoiceNumber: "F1", amount: 100, status: "Paid", createdAt: "x" });
+      await ctx.db.insert("services", { clientId: c, category: "Hosting & Infrastructure", serviceName: "Hosting", quoteAmount: 30, status: "Accepted", createdAt: "x" });
+    });
+
+  it("esporta tutto, ripristina in un database vuoto e un secondo ripristino non duplica", async () => {
+    const a = makeApp();
+    const admA = await a.admin();
+    await seed(a);
+    const file = JSON.parse(JSON.stringify(await admA.query(api.backup.exportAll, {})));
+    expect(file.format).toBe("core829-crm-export/1");
+    expect(file.leads).toHaveLength(2);
+    expect(file.clients[0].projects[0].invoices[0].invoiceNumber).toBe("F1");
+
+    const b = makeApp();
+    const admB = await b.admin();
+    const dry = await admB.mutation(api.backup.restore, { payload: file, dryRun: true });
+    expect(dry).toMatchObject({ leadsCreated: 2, clientsCreated: 1, projectsCreated: 1, invoicesCreated: 1, servicesCreated: 1 });
+    expect(await b.run(async (ctx) => (await ctx.db.query("leads").collect()).length)).toBe(0); // l'anteprima non scrive
+    await admB.mutation(api.backup.restore, { payload: file, dryRun: false });
+    const state = () => b.run(async (ctx) => ({ l: (await ctx.db.query("leads").collect()).length, c: (await ctx.db.query("clients").collect()).length, p: (await ctx.db.query("projects").collect()).length, i: (await ctx.db.query("invoices").collect()).length, s: (await ctx.db.query("services").collect()).length, t: (await ctx.db.query("projectTasks").collect()).length }));
+    expect(await state()).toEqual({ l: 2, c: 1, p: 1, i: 1, s: 1, t: 1 });
+    const again = await admB.mutation(api.backup.restore, { payload: file, dryRun: false });
+    expect(again).toMatchObject({ leadsCreated: 0, clientsCreated: 0, projectsCreated: 0, invoicesCreated: 0, servicesCreated: 0 });
+    expect(await state()).toEqual({ l: 2, c: 1, p: 1, i: 1, s: 1, t: 1 });
+    // il cliente ripristinato resta collegato al suo lead
+    const link = await b.run(async (ctx) => { const c = (await ctx.db.query("clients").collect())[0]; return c.leadId ? (await ctx.db.get(c.leadId))?.leadName : null; });
+    expect(link).toBe("Dimitri Boutourline");
+  });
+
+  it("non cancella nulla e non duplica un lead scritto in modo leggermente diverso", async () => {
+    const t = makeApp();
+    const adm = await t.admin();
+    await t.run(async (ctx) => { await ctx.db.insert("leads", lead("Dimitri Bouterline", "Studio D", "d@x.it")); await ctx.db.insert("leads", lead("Altro Lead", "Altra")); });
+    const file = { format: "core829-crm-export/1", leads: [{ ref: "1", ...lead("Dimitri Boutourline", "Studio D", "d@x.it") }], clients: [] };
+    const r = await adm.mutation(api.backup.restore, { payload: file, dryRun: false });
+    expect(r).toMatchObject({ leadsCreated: 0, leadsExisting: 1 });
+    expect(await t.run(async (ctx) => (await ctx.db.query("leads").collect()).length)).toBe(2);
+  });
+
+  it("solo l'amministratore; file non valido rifiutato", async () => {
+    const t = makeApp();
+    const adm = await t.admin();
+    await expect(t.mutation(api.backup.restore, { payload: {}, dryRun: true })).rejects.toThrow(/Not authenticated/);
+    await expect(adm.mutation(api.backup.restore, { payload: { format: "altro" }, dryRun: true })).rejects.toThrow(/Invalid file/);
+  });
+});
