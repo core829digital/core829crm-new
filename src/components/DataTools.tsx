@@ -4,7 +4,9 @@ import { useState } from "react";
 import { useConvex, useMutation, useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
-import { Loader2, Upload, GitMerge, Copy, Download, ArchiveRestore } from "lucide-react";
+import { Loader2, Upload, GitMerge, Copy, Download, ArchiveRestore, FileSpreadsheet } from "lucide-react";
+import { parseCsv } from "../../convex/lib/csv";
+import { mapSheetRow, type SheetLead } from "../../convex/lib/leadSheet";
 import { useAuth } from "@/components/AuthContext";
 
 type Item = { id: string; name: string; company: string; email: string; phone: string };
@@ -12,20 +14,20 @@ type Group = { reasons: string[]; items: Item[] };
 
 export default function DataTools() {
   const { user } = useAuth();
-  const [tab, setTab] = useState<"dupes" | "import" | "backup">("dupes");
+  const [tab, setTab] = useState<"dupes" | "import" | "backup" | "leads">("dupes");
   if (user && user.userId !== "00001") return <p className="text-center py-20 text-zinc-500">Only the administrator can use the data tools.</p>;
   return (
     <div className="max-w-5xl mx-auto">
       <h1 className="text-2xl font-bold mb-1">Data tools</h1>
       <p className="text-sm text-zinc-500 mb-5">Find and merge duplicate leads/clients, and import everything from the client portal. Nothing here ever deletes a lead unless you confirm a merge.</p>
       <div className="flex gap-2 mb-5" role="tablist">
-        {([["dupes", "Duplicates", Copy], ["import", "Import from portal", Upload], ["backup", "Export / Backup", Download]] as const).map(([id, label, Icon]) => (
+        {([["dupes", "Duplicates", Copy], ["import", "Import from portal", Upload], ["backup", "Export / Backup", Download], ["leads", "Import leads (CSV)", FileSpreadsheet]] as const).map(([id, label, Icon]) => (
           <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium ${tab === id ? "bg-red-600 text-white" : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"}`}>
             <Icon size={15} /> {label}
           </button>
         ))}
       </div>
-      {tab === "dupes" ? <Duplicates /> : tab === "import" ? <ImportFromPortal /> : <BackupTools />}
+      {tab === "dupes" ? <Duplicates /> : tab === "import" ? <ImportFromPortal /> : tab === "leads" ? <ImportLeadsCsv /> : <BackupTools />}
     </div>
   );
 }
@@ -322,6 +324,88 @@ function BackupTools() {
           </div>
         )}
       </section>
+    </div>
+  );
+}
+
+type LeadsReport = { dryRun: boolean; total: number; created: number; skippedExisting: string[]; skippedInvalid: string[] };
+
+/** Importa i lead da un foglio Google (File → Scarica → CSV, scheda «Lead»). Anteprima, nessun doppione, nessuna cancellazione. */
+function ImportLeadsCsv() {
+  const run = useMutation(api.leadsImport.run);
+  const [rows, setRows] = useState<SheetLead[] | null>(null);
+  const [fileName, setFileName] = useState("");
+  const [report, setReport] = useState<LeadsReport | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  const load = async (f: File | undefined) => {
+    setReport(null);
+    setError("");
+    if (!f) return;
+    try {
+      const parsed = parseCsv(await f.text());
+      const today = new Date().toISOString().slice(0, 10);
+      const mapped = parsed.map((r) => mapSheetRow(r, today)).filter((x): x is SheetLead => x !== null);
+      if (mapped.length === 0) throw new Error("empty");
+      setRows(mapped);
+      setFileName(f.name);
+    } catch {
+      setRows(null);
+      setFileName("");
+      setError("No leads found. Download the sheet «Lead» as CSV (Google Sheets: File → Download → Comma-separated values) and choose that file.");
+    }
+  };
+  const go = async (dryRun: boolean) => {
+    if (!rows) return;
+    if (!dryRun && !window.confirm(`Import ${rows.length} leads now? Nothing is deleted; leads already present are skipped.`)) return;
+    setBusy(true);
+    setError("");
+    try {
+      setReport((await run({ leads: rows, dryRun })) as LeadsReport);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Import failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <ol className="text-sm text-zinc-600 list-decimal pl-5 space-y-1">
+        <li>In Google Sheets open the lead sheet (tab <b>Lead</b>) and choose <b>File → Download → Comma-separated values (.csv)</b>.</li>
+        <li>Choose that file here: you will see how many leads were found.</li>
+        <li>Press <b>Preview</b> (nothing is written), then <b>Import</b>. Leads already in the CRM (same phone, email or similar name) are skipped.</li>
+      </ol>
+      <label className="flex items-center gap-2 border border-dashed border-zinc-300 rounded-lg px-4 py-3 text-sm cursor-pointer hover:bg-zinc-50">
+        <Upload size={16} className="text-zinc-400" />
+        <span className={fileName ? "text-zinc-800" : "text-zinc-400"}>{fileName ? `${fileName} — ${rows?.length ?? 0} leads found` : "Choose the CSV file"}</span>
+        <input type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => void load(e.target.files?.[0])} />
+      </label>
+      <div className="flex gap-2">
+        <button disabled={!rows || busy} onClick={() => void go(true)} className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 hover:bg-zinc-200 disabled:opacity-50">Preview</button>
+        <button disabled={!rows || busy || !report?.dryRun} onClick={() => void go(false)} className="px-4 py-2 rounded-lg text-sm font-medium bg-black text-white hover:bg-zinc-800 disabled:opacity-50">
+          {busy ? <Loader2 size={15} className="animate-spin" /> : "Import"}
+        </button>
+      </div>
+      {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+      {report && (
+        <div className="rounded-xl border border-zinc-200 bg-white p-4 text-sm space-y-2">
+          <p className="font-semibold">{report.dryRun ? "Preview — nothing was written yet" : "Import completed"}</p>
+          <ul className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-1">
+            <li>In the file: <b>{report.total}</b></li>
+            <li>{report.dryRun ? "To create" : "Created"}: <b>{report.created}</b></li>
+            <li>Already in the CRM: <b>{report.skippedExisting.length}</b></li>
+            <li>Invalid rows: <b>{report.skippedInvalid.length}</b></li>
+          </ul>
+          {report.skippedExisting.length > 0 && (
+            <details>
+              <summary className="cursor-pointer font-medium">Skipped: already present</summary>
+              <ul className="list-disc pl-5 text-zinc-600 mt-1">{report.skippedExisting.map((x, i) => <li key={i}>{x}</li>)}</ul>
+            </details>
+          )}
+        </div>
+      )}
     </div>
   );
 }

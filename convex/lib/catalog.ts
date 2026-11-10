@@ -65,10 +65,10 @@ export const clientCategories: Record<string, string[]> = {
     "Event venue / location", "Event catering", "Photographer", "Videographer / production house", "Theater / cinema", "Trade show / expo organizer",
   ],
   "Hospitality & Food": [
-    "Restaurant", "Bar / cafe", "Hotel", "B&B / guest house", "Resort / villa", "Catering", "Bakery / pastry", "Winery / brewery", "Food producer", "Food delivery / ghost kitchen",
+    "Restaurant", "Bar / cafe", "Hotel", "B&B / guest house", "Resort / villa", "Catering", "Bakery / pastry", "Butcher / deli", "Winery / brewery", "Food producer", "Food delivery / ghost kitchen",
   ],
   "Retail & E-commerce": [
-    "Fashion / apparel", "Jewelry / watches", "Cosmetics / perfumery", "Electronics", "Furniture / home decor", "Grocery / supermarket", "Online store", "Gifts / flowers", "Sports shop", "Wholesale / distribution",
+    "Fashion / apparel", "Hardware store", "Jewelry / watches", "Cosmetics / perfumery", "Electronics", "Furniture / home decor", "Grocery / supermarket", "Online store", "Gifts / flowers", "Sports shop", "Wholesale / distribution",
   ],
   "Health & Wellness": [
     "Medical clinic", "Dental clinic", "Aesthetic clinic / medspa", "Beauty salon / barber", "Spa / wellness center", "Gym / fitness studio", "Physiotherapy / rehab", "Psychology / coaching", "Veterinary", "Pharmacy / parapharmacy", "Nutrition / dietitian",

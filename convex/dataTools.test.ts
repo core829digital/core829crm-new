@@ -235,3 +235,38 @@ describe("backup completo", () => {
     await expect(adm.mutation(api.backup.restore, { payload: { format: "altro" }, dryRun: true })).rejects.toThrow(/Invalid file/);
   });
 });
+
+describe("importazione lead da foglio", () => {
+  const L = (o: Record<string, unknown> = {}) => ({ leadName: "Monia", company: "Hostaria Il Buco", email: "", phone: "+39057830230", source: "Google Maps", leadStatus: "Lost", lossReason: "Not Qualified", dateCreated: "2026-11-06", category: "Hospitality & Food", niche: "Restaurant", notes: "n", ...o });
+
+  it("anteprima non scrive; import crea; secondo import salta i presenti; non cancella", async () => {
+    const t = makeApp();
+    const adm = await t.admin();
+    await t.run((ctx) => ctx.db.insert("leads", lead("Lead Preesistente", "Altra Srl", "x@y.it")));
+    const rows = [L(), L({ leadName: "Il Rabarbaro", company: "Il Rabarbaro", phone: "+39057864592", leadStatus: "New", lossReason: undefined }), L({ leadName: "", company: "" })];
+    const dry = await adm.mutation(api.leadsImport.run, { leads: rows, dryRun: true });
+    expect(dry).toMatchObject({ total: 3, created: 2 });
+    expect(dry.skippedInvalid).toHaveLength(1);
+    expect(await t.run(async (ctx) => (await ctx.db.query("leads").collect()).length)).toBe(1);
+    await adm.mutation(api.leadsImport.run, { leads: rows, dryRun: false });
+    const all = await t.run((ctx) => ctx.db.query("leads").collect());
+    expect(all).toHaveLength(3);
+    expect(all.find((x) => x.company === "Hostaria Il Buco")).toMatchObject({ leadStatus: "Lost", lossReason: "Not Qualified", category: "Hospitality & Food", niche: "Restaurant", source: "Google Maps" });
+    const again = await adm.mutation(api.leadsImport.run, { leads: rows, dryRun: false });
+    expect(again.created).toBe(0);
+    expect(again.skippedExisting).toHaveLength(2);
+    expect(await t.run(async (ctx) => (await ctx.db.query("leads").collect()).length)).toBe(3);
+  });
+
+  it("stesso telefono con nome scritto diversamente = stesso lead; categoria sconosciuta ignorata; solo admin", async () => {
+    const t = makeApp();
+    const adm = await t.admin();
+    await t.run((ctx) => ctx.db.insert("leads", { ...lead("Monia Rossi", "Hostaria Il Buco"), phone: "+39 0578 30230" }));
+    const r = await adm.mutation(api.leadsImport.run, { leads: [L(), L({ leadName: "Nuovo", company: "Nuovo Locale", phone: "+39111", category: "Inventata", niche: "x" })], dryRun: false });
+    expect(r.created).toBe(1);
+    const nuovo = (await t.run((ctx) => ctx.db.query("leads").collect())).find((x) => x.company === "Nuovo Locale");
+    expect(nuovo?.category).toBeUndefined();
+    expect(nuovo?.niche).toBeUndefined();
+    await expect(t.mutation(api.leadsImport.run, { leads: [L()], dryRun: true })).rejects.toThrow(/Not authenticated/);
+  });
+});
