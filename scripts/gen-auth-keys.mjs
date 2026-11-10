@@ -10,7 +10,9 @@ const kid = "crm-1";
 const dep = process.argv[2] ? ` --deployment ${process.argv[2]}` : "";
 const privateJwk = JSON.stringify({ ...priv, alg: "RS256", use: "sig", kid });
 const jwks = JSON.stringify({ keys: [{ ...pub, alg: "RS256", use: "sig", kid }] });
+// In base64: nessuna virgoletta, quindi funziona uguale su Mac, Linux, PowerShell e cmd.
+const b64 = (s) => Buffer.from(s, "utf8").toString("base64");
 
 console.log("Esegui questi due comandi (uno per volta), poi `npx convex deploy`. Le variabili valgono per UN deployment: ripeti per ogni deployment (sviluppo e produzione).\n");
-console.log(`npx convex env set${dep} CRM_JWT_PRIVATE_JWK '${privateJwk}'\n`);
-console.log(`npx convex env set${dep} CRM_JWKS '${jwks}'\n`);
+console.log(`npx convex env set${dep} CRM_JWT_PRIVATE_JWK ${b64(privateJwk)}\n`);
+console.log(`npx convex env set${dep} CRM_JWKS ${b64(jwks)}\n`);

@@ -11,7 +11,15 @@ const b64url = (bytes: ArrayBuffer | Uint8Array | string): string => {
 export async function signSessionToken(userDocId: string, userId: string, sessionId: string): Promise<{ token: string; expiresAt: number }> {
   const raw = process.env.CRM_JWT_PRIVATE_JWK;
   if (!raw) throw new Error("Server auth is not configured (CRM_JWT_PRIVATE_JWK missing). See docs/SECURITY-SERVER.md.");
-  const key = await crypto.subtle.importKey("jwk", JSON.parse(raw), { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"]);
+  // Accetta il JSON oppure la sua versione base64 (la base64 non si rovina con le virgolette di PowerShell/cmd).
+  let jwk: JsonWebKey;
+  try {
+    const text = raw.trim().startsWith("{") ? raw : atob(raw.trim());
+    jwk = JSON.parse(text);
+  } catch {
+    throw new Error("CRM_JWT_PRIVATE_JWK is malformed (the quotes were probably lost). Regenerate it with: node scripts/gen-auth-keys.mjs <deployment>");
+  }
+  const key = await crypto.subtle.importKey("jwk", jwk, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"]);
   const now = Math.floor(Date.now() / 1000);
   const header = b64url(JSON.stringify({ alg: "RS256", typ: "JWT", kid: JWT_KEY_ID }));
   const payload = b64url(JSON.stringify({ iss: JWT_ISSUER, aud: JWT_AUDIENCE, sub: userDocId, userId, sid: sessionId, iat: now, exp: now + TOKEN_SECONDS }));

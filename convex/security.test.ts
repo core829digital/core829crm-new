@@ -197,6 +197,16 @@ describe("sessioni (cookie HttpOnly) e token brevi", () => {
     expect(await t.mutation(api.sessions.mint, { secret: s.sessionSecret })).toBeNull();
   });
 
+  it("la chiave privata puo' essere in base64 (nessun problema di virgolette) e una chiave rovinata da' un errore chiaro", async () => {
+    const t = convexTest(schema, modules);
+    await legacyUser(t, "20008", "pw-lunga-123456");
+    const r = await login(t, "20008", "pw-lunga-123456");
+    process.env.CRM_JWT_PRIVATE_JWK = btoa(privateJwk);
+    expect(await t.mutation(api.sessions.mint, { secret: r.sessionSecret })).not.toBeNull();
+    process.env.CRM_JWT_PRIVATE_JWK = "{kty:RSA,n:abc}"; // virgolette perse dalla shell
+    await expect(t.mutation(api.sessions.mint, { secret: r.sessionSecret })).rejects.toThrow(/malformed/);
+  });
+
   it("senza chiave configurata non si rilascia nessun token (si chiude)", async () => {
     const t = convexTest(schema, modules);
     await legacyUser(t, "20006", "pw-lunga-123456");
