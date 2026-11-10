@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { notify } from "./notify";
+import { requireAdmin, requireUser } from "./lib/authz";
 
 export const setGoal = mutation({
   args: {
@@ -8,6 +9,7 @@ export const setGoal = mutation({
     monthlyGoal: v.number(),
   },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
     const existing = await ctx.db
       .query("revenueGoals")
       .withIndex("by_month", (q) => q.eq("month", args.month))
@@ -32,6 +34,7 @@ export const checkGoalReached = mutation({
     currentRevenue: v.number(),
   },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     const goal = await ctx.db
       .query("revenueGoals")
       .withIndex("by_month", (q) => q.eq("month", args.month))
@@ -49,6 +52,7 @@ export const checkGoalReached = mutation({
 export const getGoal = query({
   args: { month: v.string() },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     const goal = await ctx.db
       .query("revenueGoals")
       .withIndex("by_month", (q) => q.eq("month", args.month))
@@ -59,6 +63,7 @@ export const getGoal = query({
 
 export const getAllMonths = query({
   handler: async (ctx) => {
+    await requireUser(ctx);
     const goals = await ctx.db.query("revenueGoals").collect();
     return goals.map((g) => ({ month: g.month, goal: g.monthlyGoal }));
   },

@@ -1,8 +1,10 @@
 import { mutation } from "./_generated/server";
+import { requireAdmin } from "./lib/authz";
 
 export const backfillClientsFromWonLeads = mutation({
   args: {},
   handler: async (ctx) => {
+    await requireAdmin(ctx);
     const leads = await ctx.db.query("leads").collect();
     const wonLeads = leads.filter((l) => l.leadStatus === "Won");
 

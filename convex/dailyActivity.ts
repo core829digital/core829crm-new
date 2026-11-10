@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { notify } from "./notify";
+import { requireUser } from "./lib/authz";
 
 export const logActivity = mutation({
   args: {
@@ -12,6 +13,7 @@ export const logActivity = mutation({
     callsTaken: v.number(),
   },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     const existing = await ctx.db
       .query("dailyActivities")
       .withIndex("by_setter_date", (q) =>
@@ -47,6 +49,7 @@ export const getActivity = query({
     dateTo: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     let activities = await ctx.db.query("dailyActivities").collect();
 
     if (args.setterName) {
@@ -67,6 +70,7 @@ export const getActivity = query({
 
 export const getSetters = query({
   handler: async (ctx) => {
+    await requireUser(ctx);
     const activities = await ctx.db.query("dailyActivities").collect();
     const names = [...new Set(activities.map((a) => a.setterName))];
     return names.sort();

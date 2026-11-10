@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { assertSelf, requireAdmin, requireUser } from "./lib/authz";
 
 export const log = mutation({
   args: {
@@ -9,9 +10,11 @@ export const log = mutation({
     details: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const me = await requireUser(ctx);
+    assertSelf(me, args.userId);
     await ctx.db.insert("activityLogs", {
-      userId: args.userId,
-      userName: args.userName,
+      userId: me.userId,
+      userName: `${me.name} ${me.surname}`,
       action: args.action,
       details: args.details,
       timestamp: new Date().toISOString(),
@@ -24,6 +27,7 @@ export const list = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
     let logs = await ctx.db
       .query("activityLogs")
       .withIndex("by_timestamp")
@@ -37,6 +41,7 @@ export const list = query({
 export const getByUserId = query({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
     return await ctx.db
       .query("activityLogs")
       .withIndex("by_userId", (q) => q.eq("userId", args.userId))

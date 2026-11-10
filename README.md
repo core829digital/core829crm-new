@@ -45,3 +45,6 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 ## Test
 `npm test` (vitest + convex-test per unione, importazione ed eliminazioni; `node --test` per il riconoscimento dei doppioni).
+
+## Sicurezza
+Vedi `docs/SECURITY-SERVER.md` (accesso con token firmato, ruoli, chiavi, passi manuali).

@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { AuthProvider, useAuth } from "./AuthContext";
+import { useAuth } from "./AuthContext";
 import Navigation from "./Navigation";
 import AnnouncementBanner from "./AnnouncementBanner";
 
@@ -37,8 +37,6 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
-    <AuthProvider>
-      <AuthGuard>{children}</AuthGuard>
-    </AuthProvider>
+    <AuthGuard>{children}</AuthGuard>
   );
 }

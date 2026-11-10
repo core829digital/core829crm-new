@@ -1,27 +1,19 @@
 import { v } from "convex/values";
 import { mutation, query, type MutationCtx } from "./_generated/server";
 import { notify } from "./notify";
+import { assertSelf, requireAdmin, requireUser } from "./lib/authz";
+import { signSessionToken } from "./lib/jwt";
+import { assertStrongPassword, generateSalt, hashPassword, verifyPassword } from "./lib/password";
 
-async function hashPassword(password: string, salt: string): Promise<string> {
-  const enc = new TextEncoder();
-  const data = enc.encode(password + salt);
-  const hash = await crypto.subtle.digest("SHA-256", data);
-  return Array.from(new Uint8Array(hash))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-function generateSalt(): string {
-  const arr = new Uint8Array(16);
-  crypto.getRandomValues(arr);
-  return Array.from(arr)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-function generateUserId(): string {
-  const n = Math.floor(Math.random() * 90000) + 10000;
-  return String(n);
+async function generateUniqueUserId(ctx: MutationCtx): Promise<string> {
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const arr = new Uint32Array(1);
+    crypto.getRandomValues(arr);
+    const id = String((arr[0] % 90000) + 10000);
+    const clash = await ctx.db.query("users").withIndex("by_userId", (q) => q.eq("userId", id)).first();
+    if (!clash) return id;
+  }
+  throw new Error("Could not generate a unique user id");
 }
 
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
@@ -60,20 +52,33 @@ export const login = mutation({
       .query("users")
       .withIndex("by_userId", (q) => q.eq("userId", args.userId))
       .first();
+    // NB: un errore lanciato annulla TUTTA la mutation, compreso il conteggio dei tentativi: per questo i
+    // fallimenti si restituiscono come risultato (ok: false) e non con throw, altrimenti il blocco non scatterebbe mai.
     if (!user) {
       await logAttempt(ctx, args.userId, false);
-      throw new Error("Invalid credentials");
+      return { ok: false as const, error: "Invalid credentials" };
     }
 
-    const hash = await hashPassword(args.password, user.salt);
-    if (hash !== user.passwordHash) {
+    const check = await verifyPassword(args.password, user.salt, user.passwordHash);
+    if (!check.ok) {
       await logAttempt(ctx, args.userId, false);
-      throw new Error("Invalid credentials");
+      return { ok: false as const, error: "Invalid credentials" };
     }
 
     await logAttempt(ctx, args.userId, true);
 
+    // Hash vecchio (SHA-256 semplice): si passa a PBKDF2 ora che conosciamo la password in chiaro.
+    if (check.needsUpgrade) {
+      const salt = generateSalt();
+      await ctx.db.patch(user._id, { salt, passwordHash: await hashPassword(args.password, salt) });
+    }
+
+    // Token firmato dal server: da qui in poi e' lui a dire chi sei, non il browser.
+    const token = await signSessionToken(user._id, user.userId);
+
     return {
+      ok: true as const,
+      token,
       _id: user._id,
       userId: user.userId,
       name: user.name,
@@ -86,20 +91,18 @@ export const login = mutation({
 
 export const createUser = mutation({
   args: {
-    adminUserId: v.string(),
+    /** Non piu' usato: l'amministratore e' quello del token. Resta per compatibilita'. */
+    adminUserId: v.optional(v.string()),
     name: v.string(),
     surname: v.string(),
     password: v.string(),
     role: v.string(),
   },
   handler: async (ctx, args) => {
-    const admin = await ctx.db
-      .query("users")
-      .withIndex("by_userId", (q) => q.eq("userId", args.adminUserId))
-      .first();
-    if (!admin || admin.userId !== "00001") throw new Error("Only admin can create users");
+    const admin = await requireAdmin(ctx);
+    assertStrongPassword(args.password);
 
-    const newUserId = generateUserId();
+    const newUserId = await generateUniqueUserId(ctx);
     const salt = generateSalt();
     const passwordHash = await hashPassword(args.password, salt);
 
@@ -110,7 +113,7 @@ export const createUser = mutation({
       passwordHash,
       salt,
       role: args.role,
-      createdBy: args.adminUserId,
+      createdBy: admin.userId,
       createdAt: new Date().toISOString(),
     });
 
@@ -127,6 +130,7 @@ export const createUser = mutation({
 export const listUsers = query({
   args: {},
   handler: async (ctx) => {
+    await requireUser(ctx);
     const users = await ctx.db.query("users").collect();
     return users.map((u) => ({
       _id: u._id,
@@ -142,7 +146,7 @@ export const listUsers = query({
 
 export const updateUser = mutation({
   args: {
-    adminUserId: v.string(),
+    adminUserId: v.optional(v.string()),
     id: v.id("users"),
     name: v.optional(v.string()),
     surname: v.optional(v.string()),
@@ -150,7 +154,7 @@ export const updateUser = mutation({
     role: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    if (args.adminUserId !== "00001") throw new Error("Only admin can update users");
+    await requireAdmin(ctx);
 
     const { id, password, adminUserId: _, ...fields } = args;
     const updates: Record<string, unknown> = {};
@@ -158,6 +162,7 @@ export const updateUser = mutation({
       if (value !== undefined) updates[key] = value;
     }
     if (password) {
+      assertStrongPassword(password);
       const existing = await ctx.db.get(id);
       if (!existing) throw new Error("User not found");
       const salt = generateSalt();
@@ -175,17 +180,22 @@ export const changePassword = mutation({
     newPassword: v.string(),
   },
   handler: async (ctx, args) => {
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
-      .first();
-    if (!user) throw new Error("User not found");
+    const me = await requireUser(ctx);
+    assertSelf(me, args.userId);
+    assertStrongPassword(args.newPassword);
+    const user = me;
+    // Anche il cambio password e' limitato nei tentativi (stesso contatore del login).
+    await checkRateLimit(ctx, user.userId);
 
-    const hash = await hashPassword(args.currentPassword, user.salt);
-    if (hash !== user.passwordHash) throw new Error("Current password incorrect");
+    const check = await verifyPassword(args.currentPassword, user.salt, user.passwordHash);
+    if (!check.ok) {
+      await logAttempt(ctx, user.userId, false);
+      return { ok: false as const, error: "Current password incorrect" };
+    }
 
     const newSalt = generateSalt();
     const newHash = await hashPassword(args.newPassword, newSalt);
     await ctx.db.patch(user._id, { passwordHash: newHash, salt: newSalt });
+    return { ok: true as const };
   },
 });

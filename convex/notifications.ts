@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { assertSelf, requireUser } from "./lib/authz";
 
 export const create = mutation({
   args: {
@@ -10,6 +11,7 @@ export const create = mutation({
     link: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     return await ctx.db.insert("notifications", {
       ...args,
       isRead: false,
@@ -21,6 +23,7 @@ export const create = mutation({
 export const markRead = mutation({
   args: { id: v.id("notifications") },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     await ctx.db.patch(args.id, { isRead: true });
   },
 });
@@ -28,6 +31,8 @@ export const markRead = mutation({
 export const markAllRead = mutation({
   args: { userId: v.optional(v.string()) },
   handler: async (ctx, args) => {
+    const me = await requireUser(ctx);
+    assertSelf(me, args.userId);
     const notifs = await ctx.db
       .query("notifications")
       .filter((q) =>
@@ -45,6 +50,7 @@ export const markAllRead = mutation({
 export const list = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     return await ctx.db
       .query("notifications")
       .order("desc")
@@ -55,6 +61,8 @@ export const list = query({
 export const listForUser = query({
   args: { userId: v.string(), limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
+    const me = await requireUser(ctx);
+    assertSelf(me, args.userId);
     const result = await ctx.db
       .query("notifications")
       .order("desc")
@@ -68,6 +76,8 @@ export const listForUser = query({
 export const getUnreadCount = query({
   args: { userId: v.optional(v.string()) },
   handler: async (ctx, args) => {
+    const me = await requireUser(ctx);
+    assertSelf(me, args.userId);
     const notifs = await ctx.db
       .query("notifications")
       .filter((q) =>

@@ -1,10 +1,12 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { notify } from "./notify";
+import { requireUser } from "./lib/authz";
 
 export const getByClientId = query({
   args: { clientId: v.id("clients") },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     return await ctx.db
       .query("projects")
       .withIndex("by_clientId", (q) => q.eq("clientId", args.clientId))
@@ -15,6 +17,7 @@ export const getByClientId = query({
 export const getById = query({
   args: { id: v.id("projects") },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     return await ctx.db.get(args.id);
   },
 });
@@ -31,6 +34,7 @@ export const create = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     const id = await ctx.db.insert("projects", {
       ...args,
       createdAt: new Date().toISOString(),
@@ -57,6 +61,7 @@ export const update = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     const { id, ...fields } = args;
     const updates: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(fields)) {
@@ -78,6 +83,7 @@ export const update = mutation({
 export const remove = mutation({
   args: { id: v.id("projects") },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     // Come dice la conferma nell'interfaccia: via anche attivita' e fatture (e i loro file).
     for (const t of await ctx.db.query("projectTasks").withIndex("by_projectId", (q) => q.eq("projectId", args.id)).collect()) await ctx.db.delete(t._id);
     for (const i of await ctx.db.query("invoices").withIndex("by_projectId", (q) => q.eq("projectId", args.id)).collect()) {
@@ -94,6 +100,7 @@ export const addTask = mutation({
     taskName: v.string(),
   },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     const id = await ctx.db.insert("projectTasks", {
       projectId: args.projectId,
       taskName: args.taskName,
@@ -110,6 +117,7 @@ export const toggleTask = mutation({
     completed: v.boolean(),
   },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     await ctx.db.patch(args.id, { completed: args.completed });
   },
 });
@@ -117,6 +125,7 @@ export const toggleTask = mutation({
 export const removeTask = mutation({
   args: { id: v.id("projectTasks") },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     await ctx.db.delete(args.id);
   },
 });
@@ -124,6 +133,7 @@ export const removeTask = mutation({
 export const listTasks = query({
   args: { projectId: v.id("projects") },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     return await ctx.db
       .query("projectTasks")
       .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))

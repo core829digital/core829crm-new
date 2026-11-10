@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { lossReasons } from "./schema";
 import { notify } from "./notify";
+import { requireUser } from "./lib/authz";
 
 export const create = mutation({
   args: {
@@ -37,7 +38,12 @@ export const create = mutation({
     _userName: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const { _userId, _userName, ...rest } = args;
+    const me = await requireUser(ctx);
+    // L'autore e' quello del token, non quello dichiarato dal browser.
+    const _userId = me.userId;
+    const _userName = `${me.name} ${me.surname}`;
+    const { _userId: _ignoredId, _userName: _ignoredName, ...rest } = args;
+    void _ignoredId; void _ignoredName;
     const earnings =
       (rest.totalDealValue - rest.refundClawbackAmount) *
       (rest.commissionPercent / 100);
@@ -96,7 +102,11 @@ export const update = mutation({
     _userName: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const { id, _userId, _userName, ...fields } = args;
+    const me = await requireUser(ctx);
+    const _userId = me.userId;
+    const _userName = `${me.name} ${me.surname}`;
+    const { id, _userId: _ignoredId, _userName: _ignoredName, ...fields } = args;
+    void _ignoredId; void _ignoredName;
     const existing = await ctx.db.get(id);
     if (!existing) throw new Error("Lead not found");
 
@@ -184,16 +194,17 @@ export const update = mutation({
 export const remove = mutation({
   args: { id: v.id("leads"), _userId: v.optional(v.string()), _userName: v.optional(v.string()) },
   handler: async (ctx, args) => {
+    const me = await requireUser(ctx);
     const lead = await ctx.db.get(args.id);
     if (!lead) return;
     // I clienti nati da questo lead restano: si scollega solo il riferimento.
     const linked = await ctx.db.query("clients").withIndex("by_leadId", (q) => q.eq("leadId", args.id)).collect();
     for (const c of linked) await ctx.db.patch(c._id, { leadId: undefined });
     await ctx.db.delete(args.id);
-    if (args._userId && args._userName) {
+    {
       await ctx.db.insert("activityLogs", {
-        userId: args._userId,
-        userName: args._userName,
+        userId: me.userId,
+        userName: `${me.name} ${me.surname}`,
         action: "Deleted lead",
         details: `Lead: ${lead.leadName} (${lead.company})`,
         timestamp: new Date().toISOString(),
@@ -211,6 +222,7 @@ export const list = query({
     search: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     let leads = await ctx.db.query("leads").collect();
 
     if (args.statusFilter && args.statusFilter !== "all") {
@@ -241,6 +253,7 @@ export const list = query({
 export const getById = query({
   args: { id: v.id("leads") },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     return await ctx.db.get(args.id);
   },
 });
@@ -254,6 +267,7 @@ export const getDashboardData = query({
     dateTo: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     let leads = await ctx.db.query("leads").collect();
 
     if (args.setterFilter && args.setterFilter !== "all") {

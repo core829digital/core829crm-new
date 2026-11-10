@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { notify } from "./notify";
+import { assertSelf, requireUser } from "./lib/authz";
 
 async function assertMember(ctx: any, conversationId: any, userId: string) {
   const member = await ctx.db
@@ -21,6 +22,8 @@ async function assertAdmin(ctx: any, conversationId: any, userId: string) {
 export const listForUser = query({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
+    const me = await requireUser(ctx);
+    assertSelf(me, args.userId);
     const memberships = await ctx.db
       .query("conversationMembers")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
@@ -82,6 +85,8 @@ export const getById = query({
     userId: v.string(),
   },
   handler: async (ctx, args) => {
+    const me = await requireUser(ctx);
+    assertSelf(me, args.userId);
     await assertMember(ctx, args.conversationId, args.userId);
     const conv = await ctx.db.get(args.conversationId);
     if (!conv) return null;
@@ -108,6 +113,8 @@ export const createDirect = mutation({
     otherUserName: v.string(),
   },
   handler: async (ctx, args) => {
+    const me = await requireUser(ctx);
+    assertSelf(me, args.userId);
     const existing = await ctx.db
       .query("conversationMembers")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
@@ -162,6 +169,8 @@ export const createGroup = mutation({
     leadId: v.optional(v.id("leads")),
   },
   handler: async (ctx, args) => {
+    const me = await requireUser(ctx);
+    assertSelf(me, args.userId);
     const allUsers = await ctx.db.query("users").collect();
     const nameMap = new Map(allUsers.map((u) => [u.userId, `${u.name} ${u.surname}`]));
     const allMemberIds = [args.userId, ...args.memberIds.filter((id) => id !== args.userId)];
@@ -201,6 +210,8 @@ export const addMember = mutation({
     newUserId: v.string(),
   },
   handler: async (ctx, args) => {
+    const me = await requireUser(ctx);
+    assertSelf(me, args.userId);
     await assertAdmin(ctx, args.conversationId, args.userId);
     const existing = await ctx.db
       .query("conversationMembers")
@@ -232,6 +243,8 @@ export const removeMember = mutation({
     targetUserId: v.string(),
   },
   handler: async (ctx, args) => {
+    const me = await requireUser(ctx);
+    assertSelf(me, args.userId);
     await assertAdmin(ctx, args.conversationId, args.userId);
     if (args.userId === args.targetUserId) throw new Error("Cannot remove yourself");
 
@@ -260,6 +273,8 @@ export const leave = mutation({
     conversationId: v.id("conversations"),
   },
   handler: async (ctx, args) => {
+    const me = await requireUser(ctx);
+    assertSelf(me, args.userId);
     const member = await ctx.db
       .query("conversationMembers")
       .withIndex("by_conversation", (q) => q.eq("conversationId", args.conversationId))
@@ -273,6 +288,7 @@ export const leave = mutation({
 export const searchUsers = query({
   args: { query: v.string() },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     if (args.query.length < 2) return [];
     const users = await ctx.db.query("users").collect();
     const q = args.query.toLowerCase();
@@ -300,6 +316,8 @@ export const getMembers = query({
     userId: v.string(),
   },
   handler: async (ctx, args) => {
+    const me = await requireUser(ctx);
+    assertSelf(me, args.userId);
     await assertMember(ctx, args.conversationId, args.userId);
     return await ctx.db
       .query("conversationMembers")

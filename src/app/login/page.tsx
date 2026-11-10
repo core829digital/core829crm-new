@@ -22,11 +22,17 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      const user = await login({ userId: userId.trim(), password });
+      const res = await login({ userId: userId.trim(), password });
+      if (!res.ok) {
+        setError("Invalid ID or password");
+        return;
+      }
+      const { ok: _ok, ...user } = res;
+      void _ok;
       setUser(user);
       router.push("/");
-    } catch {
-      setError("Invalid ID or password");
+    } catch (e) {
+      setError(e instanceof Error && /Too many/.test(e.message) ? "Too many attempts. Try again in 15 minutes." : "Invalid ID or password");
     } finally {
       setLoading(false);
     }

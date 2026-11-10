@@ -1,9 +1,11 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { notify } from "./notify";
+import { requireUser } from "./lib/authz";
 
 export const generateUploadUrl = mutation({
   handler: async (ctx) => {
+    await requireUser(ctx);
     return await ctx.storage.generateUploadUrl();
   },
 });
@@ -11,6 +13,7 @@ export const generateUploadUrl = mutation({
 export const getByProjectId = query({
   args: { projectId: v.id("projects") },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     return await ctx.db
       .query("invoices")
       .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
@@ -29,6 +32,7 @@ export const create = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     const id = await ctx.db.insert("invoices", {
       ...args,
       createdAt: new Date().toISOString(),
@@ -52,6 +56,7 @@ export const update = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     const { id, ...fields } = args;
     const updates: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(fields)) {
@@ -72,6 +77,7 @@ export const update = mutation({
 export const getFileUrl = query({
   args: { storageId: v.id("_storage") },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     return await ctx.storage.getUrl(args.storageId);
   },
 });
@@ -79,6 +85,7 @@ export const getFileUrl = query({
 export const remove = mutation({
   args: { id: v.id("invoices") },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     const invoice = await ctx.db.get(args.id);
     if (invoice?.fileId) {
       await ctx.storage.delete(invoice.fileId);

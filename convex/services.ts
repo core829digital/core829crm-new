@@ -1,12 +1,14 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { notify } from "./notify";
+import { requireUser } from "./lib/authz";
 
 export { serviceCategories } from "./lib/catalog";
 
 export const listByClient = query({
   args: { clientId: v.id("clients") },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     return await ctx.db
       .query("services")
       .withIndex("by_clientId", (q) => q.eq("clientId", args.clientId))
@@ -25,6 +27,7 @@ export const create = mutation({
     quoteFileName: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     const id = await ctx.db.insert("services", {
       ...args,
       status: "Pending",
@@ -45,6 +48,7 @@ export const updateStatus = mutation({
     status: v.string(),
   },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     const service = await ctx.db.get(args.id);
     if (!service) throw new Error("Service not found");
 
@@ -83,6 +87,7 @@ export const update = mutation({
     quoteAmount: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     const { id, ...fields } = args;
     const updates: Record<string, unknown> = {};
     for (const [k, val] of Object.entries(fields)) if (val !== undefined) updates[k] = val;
@@ -93,6 +98,7 @@ export const update = mutation({
 export const remove = mutation({
   args: { id: v.id("services") },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     const service = await ctx.db.get(args.id);
     if (service?.quoteFileId) {
       await ctx.storage.delete(service.quoteFileId);
@@ -103,6 +109,7 @@ export const remove = mutation({
 
 export const generateUploadUrl = mutation({
   handler: async (ctx) => {
+    await requireUser(ctx);
     return await ctx.storage.generateUploadUrl();
   },
 });
@@ -110,6 +117,7 @@ export const generateUploadUrl = mutation({
 export const getFileUrl = query({
   args: { storageId: v.id("_storage") },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     return await ctx.storage.getUrl(args.storageId);
   },
 });

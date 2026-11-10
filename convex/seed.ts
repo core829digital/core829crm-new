@@ -1,48 +1,31 @@
-import { mutation } from "./_generated/server";
+import { internalMutation } from "./_generated/server";
+import { generateSalt, hashPassword } from "./lib/password";
 
-async function hashPassword(password: string, salt: string): Promise<string> {
-  const enc = new TextEncoder();
-  const data = enc.encode(password + salt);
-  const hash = await crypto.subtle.digest("SHA-256", data);
-  return Array.from(new Uint8Array(hash))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-function generateSalt(): string {
-  const arr = new Uint8Array(16);
-  crypto.getRandomValues(arr);
-  return Array.from(arr)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-export const seedAdmin = mutation({
+/**
+ * Crea l'amministratore iniziale (ID 00001). NON e' piu' una funzione pubblica e non contiene piu' nessuna password:
+ * la password iniziale arriva dalla variabile CRM_ADMIN_INITIAL_PASSWORD (poi si cambia dal profilo).
+ *   npx convex env set CRM_ADMIN_INITIAL_PASSWORD "<password lunga>"
+ *   npx convex run seed:seedAdmin
+ */
+export const seedAdmin = internalMutation({
   args: {},
   handler: async (ctx) => {
-    const existing = await ctx.db
-      .query("users")
-      .withIndex("by_userId", (q) => q.eq("userId", "00001"))
-      .first();
+    const existing = await ctx.db.query("users").withIndex("by_userId", (q) => q.eq("userId", "00001")).first();
+    if (existing) return { created: false, message: "Admin already exists. Skipping seed." };
 
+    const password = process.env.CRM_ADMIN_INITIAL_PASSWORD;
+    if (!password || password.length < 12) throw new Error("Set CRM_ADMIN_INITIAL_PASSWORD (min 12 characters) first.");
     const salt = generateSalt();
-    const passwordHash = await hashPassword("STEFANdenis@2026", salt);
-
-    if (existing) {
-      return { created: false, message: "Admin already exists. Skipping seed." };
-    }
-
     await ctx.db.insert("users", {
       userId: "00001",
       name: "Stefan",
       surname: "Serban",
-      passwordHash,
+      passwordHash: await hashPassword(password, salt),
       salt,
       role: "Founder / CEO",
       createdBy: undefined,
       createdAt: new Date().toISOString(),
     });
-
     return { created: true, message: "Admin account created: Stefan Serban, Founder / CEO" };
   },
 });

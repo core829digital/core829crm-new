@@ -1,10 +1,12 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { notify } from "./notify";
+import { requireAdmin, requireUser } from "./lib/authz";
 
 export const list = query({
   args: {},
   handler: async (ctx) => {
+    await requireUser(ctx);
     return await ctx.db.query("clients").collect();
   },
 });
@@ -12,6 +14,7 @@ export const list = query({
 export const getById = query({
   args: { id: v.id("clients") },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     return await ctx.db.get(args.id);
   },
 });
@@ -19,6 +22,7 @@ export const getById = query({
 export const getByLeadId = query({
   args: { leadId: v.id("leads") },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     return await ctx.db
       .query("clients")
       .withIndex("by_leadId", (q) => q.eq("leadId", args.leadId))
@@ -43,6 +47,7 @@ export const create = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     const id = await ctx.db.insert("clients", {
       ...args,
       createdAt: new Date().toISOString(),
@@ -74,6 +79,7 @@ export const update = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     const { id, ...fields } = args;
     const updates: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(fields)) {
@@ -90,6 +96,7 @@ export const update = mutation({
 export const remove = mutation({
   args: { id: v.id("clients") },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
     const client = await ctx.db.get(args.id);
     if (!client) return { projects: 0, services: 0 };
     const projects = await ctx.db.query("projects").withIndex("by_clientId", (q) => q.eq("clientId", args.id)).collect();

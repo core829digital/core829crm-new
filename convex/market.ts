@@ -7,7 +7,10 @@ export const fetchRates = action({
     to: v.optional(v.string()),
     amount: v.optional(v.number()),
   },
-  handler: async (_, args) => {
+  handler: async (ctx, args) => {
+    // Le azioni non leggono il database: basta un token valido firmato dal server.
+    if (!(await ctx.auth.getUserIdentity())) throw new Error("Not authenticated");
+    if (!/^[A-Za-z]{3}$/.test(args.from) || (args.to !== undefined && !/^[A-Za-z]{3}(,[A-Za-z]{3})*$/.test(args.to))) throw new Error("Invalid currency code");
     let url = `https://api.frankfurter.app/latest?from=${args.from}`;
     if (args.to) url += `&to=${args.to}`;
     if (args.amount) url += `&amount=${args.amount}`;

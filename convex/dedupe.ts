@@ -2,11 +2,13 @@ import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { groupDuplicates } from "./lib/dedupe";
+import { requireAdmin } from "./lib/authz";
 
 /** Gruppi di lead e di clienti che sembrano la stessa persona/azienda (nome simile, stessa email o telefono). */
 export const findGroups = query({
   args: {},
   handler: async (ctx) => {
+    await requireAdmin(ctx);
     const leads = await ctx.db.query("leads").collect();
     const clients = await ctx.db.query("clients").collect();
     const leadGroups = groupDuplicates(leads.map((l) => ({ id: l._id as string, name: l.leadName, company: l.company, email: l.email, phone: l.phone })));
@@ -27,6 +29,7 @@ const FILL_FROM_DUPLICATE = ["company", "email", "phone", "website", "address", 
 export const mergeClients = mutation({
   args: { keepId: v.id("clients"), removeIds: v.array(v.id("clients")), canonicalName: v.optional(v.string()) },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
     const keep = await ctx.db.get(args.keepId);
     if (!keep) throw new Error("Client to keep not found");
     const patch: Record<string, unknown> = {};
@@ -62,6 +65,7 @@ export const mergeClients = mutation({
 export const mergeLeads = mutation({
   args: { keepId: v.id("leads"), removeIds: v.array(v.id("leads")), canonicalName: v.optional(v.string()) },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
     const keep = await ctx.db.get(args.keepId);
     if (!keep) throw new Error("Lead to keep not found");
     const patch: Record<string, unknown> = {};
@@ -91,6 +95,7 @@ export const mergeLeads = mutation({
 export const renamePerson = mutation({
   args: { leadIds: v.array(v.id("leads")), clientIds: v.array(v.id("clients")), name: v.string() },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
     const name = args.name.trim();
     if (!name) throw new Error("Name is required");
     for (const id of args.leadIds) await ctx.db.patch(id, { leadName: name });

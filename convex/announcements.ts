@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAdmin, requireUser } from "./lib/authz";
 
 export const create = mutation({
   args: {
@@ -9,6 +10,7 @@ export const create = mutation({
     order: v.number(),
   },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
     return await ctx.db.insert("announcements", {
       ...args,
       isActive: true,
@@ -27,6 +29,7 @@ export const update = mutation({
     order: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
     const { id, ...fields } = args;
     const updates: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(fields)) {
@@ -39,6 +42,7 @@ export const update = mutation({
 export const remove = mutation({
   args: { id: v.id("announcements") },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
     await ctx.db.delete(args.id);
   },
 });
@@ -46,6 +50,7 @@ export const remove = mutation({
 export const list = query({
   args: {},
   handler: async (ctx) => {
+    await requireUser(ctx);
     return await ctx.db.query("announcements").collect();
   },
 });
@@ -53,6 +58,7 @@ export const list = query({
 export const listActive = query({
   args: {},
   handler: async (ctx) => {
+    await requireUser(ctx);
     return await ctx.db
       .query("announcements")
       .withIndex("by_active", (q) => q.eq("isActive", true))

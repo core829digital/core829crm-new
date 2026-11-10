@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { mutation } from "./_generated/server";
 import { normalizeEmail, normalizeName, matchReason, sameName } from "./lib/dedupe";
+import { requireAdmin } from "./lib/authz";
 
 /**
  * Importazione dei dati dal portale (portal.core829.net) nel CRM.
@@ -54,6 +55,7 @@ const SERVICE_STATUS: Record<string, string> = { active: "Accepted", paused: "Pe
 export const run = mutation({
   args: { payload: v.any(), dryRun: v.boolean(), preferPortalNames: v.optional(v.boolean()) },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
     const clients = parseClients(args.payload);
     const write = !args.dryRun;
     const now = new Date().toISOString();

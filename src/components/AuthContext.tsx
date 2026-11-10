@@ -10,6 +10,8 @@ export type AuthUser = {
   name: string;
   surname: string;
   role: string;
+  /** Token firmato dal server al login: e' quello che il database controlla ad ogni richiesta. */
+  token: string;
 };
 
 type AuthSession = {
@@ -33,7 +35,8 @@ function getSession(): AuthSession | null {
     const raw = localStorage.getItem("crm_user");
     if (!raw) return null;
     const session: AuthSession = JSON.parse(raw);
-    if (!session.user || !session.loggedInAt) {
+    // Sessioni salvate prima del token firmato: si riaccede una volta.
+    if (!session.user || !session.loggedInAt || typeof session.user.token !== "string") {
       localStorage.removeItem("crm_user");
       return null;
     }

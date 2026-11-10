@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { notify } from "./notify";
+import { assertSelf, requireUser } from "./lib/authz";
 
 async function assertMember(ctx: any, conversationId: any, userId: string) {
   const member = await ctx.db
@@ -20,6 +21,8 @@ export const list = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const me = await requireUser(ctx);
+    assertSelf(me, args.userId);
     await assertMember(ctx, args.conversationId, args.userId);
 
     const pageSize = args.limit || 50;
@@ -59,6 +62,8 @@ export const send = mutation({
     attachmentType: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const me = await requireUser(ctx);
+    assertSelf(me, args.userId);
     await assertMember(ctx, args.conversationId, args.userId);
 
     if (!args.content.trim() && !args.attachmentStorageId) {
@@ -71,7 +76,7 @@ export const send = mutation({
     const messageId = await ctx.db.insert("messages", {
       conversationId: args.conversationId,
       senderId: args.userId,
-      senderName: args.userName,
+      senderName: `${me.name} ${me.surname}`,
       content: args.content,
       replyTo: args.replyTo,
       reactions: [],
@@ -101,7 +106,7 @@ export const send = mutation({
         await notify(ctx, {
           userId: m.userId,
           type: "chat_message",
-          title: args.userName,
+          title: `${me.name} ${me.surname}`,
           message: preview,
           link: `/chat?conversation=${args.conversationId}`,
         });
@@ -115,6 +120,7 @@ export const send = mutation({
 export const getAttachmentUrl = query({
   args: { storageId: v.id("_storage") },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     return await ctx.storage.getUrl(args.storageId);
   },
 });
@@ -125,6 +131,8 @@ export const markRead = mutation({
     userId: v.string(),
   },
   handler: async (ctx, args) => {
+    const me = await requireUser(ctx);
+    assertSelf(me, args.userId);
     await assertMember(ctx, args.conversationId, args.userId);
 
     const existing = await ctx.db
@@ -154,6 +162,8 @@ export const setTyping = mutation({
     isTyping: v.boolean(),
   },
   handler: async (ctx, args) => {
+    const me = await requireUser(ctx);
+    assertSelf(me, args.userId);
     if (!args.isTyping) {
       const existing = await ctx.db
         .query("typingStatus")
@@ -179,7 +189,7 @@ export const setTyping = mutation({
       await ctx.db.insert("typingStatus", {
         conversationId: args.conversationId,
         userId: args.userId,
-        userName: args.userName,
+        userName: `${me.name} ${me.surname}`,
         expiresAt,
       });
     }
@@ -192,6 +202,8 @@ export const getTyping = query({
     userId: v.string(),
   },
   handler: async (ctx, args) => {
+    const me = await requireUser(ctx);
+    assertSelf(me, args.userId);
     await assertMember(ctx, args.conversationId, args.userId);
     const now = Date.now();
     const statuses = await ctx.db
@@ -211,6 +223,8 @@ export const addReaction = mutation({
     emoji: v.string(),
   },
   handler: async (ctx, args) => {
+    const me = await requireUser(ctx);
+    assertSelf(me, args.userId);
     const msg = await ctx.db.get(args.messageId);
     if (!msg) throw new Error("Message not found");
 
@@ -243,6 +257,8 @@ export const remove = mutation({
     messageId: v.id("messages"),
   },
   handler: async (ctx, args) => {
+    const me = await requireUser(ctx);
+    assertSelf(me, args.userId);
     const msg = await ctx.db.get(args.messageId);
     if (!msg) throw new Error("Message not found");
 
@@ -272,6 +288,7 @@ export const remove = mutation({
 
 export const generateAttachmentUploadUrl = mutation({
   handler: async (ctx) => {
+    await requireUser(ctx);
     return await ctx.storage.generateUploadUrl();
   },
 });
@@ -279,6 +296,7 @@ export const generateAttachmentUploadUrl = mutation({
 export const getMessagesByIds = query({
   args: { ids: v.array(v.id("messages")) },
   handler: async (ctx, args) => {
+    await requireUser(ctx);
     if (args.ids.length === 0) return [];
     const results = await Promise.all(
       args.ids.map((id) => ctx.db.get(id))
@@ -295,6 +313,8 @@ export const getMessagesByIds = query({
 export const countUnread = query({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
+    const me = await requireUser(ctx);
+    assertSelf(me, args.userId);
     const memberships = await ctx.db
       .query("conversationMembers")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
