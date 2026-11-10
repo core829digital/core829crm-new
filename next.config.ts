@@ -17,6 +17,12 @@ const securityHeaders = [
     key: "X-DNS-Prefetch-Control",
     value: "on",
   },
+  // HTTPS obbligatorio per 2 anni (il CRM e' servito solo in HTTPS).
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
+  // Nessun accesso a fotocamera, microfono, posizione e pagamenti dal CRM.
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  // La Content-Security-Policy ha un nonce nuovo a ogni richiesta, quindi la imposta src/proxy.ts.
 ];
 
 const nextConfig: NextConfig = {

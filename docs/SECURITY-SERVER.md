@@ -30,6 +30,14 @@ npx convex run seed:seedAdmin
 Poi cambia la password da *My account* e rimuovi la variabile (`npx convex env remove CRM_ADMIN_INITIAL_PASSWORD`).
 
 ## Limiti noti (onesti)
-- Il token è conservato nel browser (come la sessione di prima): se un attaccante esegue codice nella pagina (XSS) può usarlo per 3 ore. Non ci sono contenuti HTML non filtrati nel CRM, ma conviene aggiungere una Content-Security-Policy.
+- Il token è conservato nel browser (come la sessione di prima): se un attaccante riuscisse a eseguire codice nella pagina (XSS) potrebbe usarlo per 3 ore. La Content-Security-Policy (sotto) rende questo scenario molto più difficile, ma non lo elimina in assoluto.
 - Un token resta valido fino alla scadenza anche dopo un cambio password (ma non dopo l'eliminazione dell'utente).
 - Tutti gli utenti connessi vedono tutti i lead e clienti (il CRM è condiviso per design); le chat sono invece private per membro.
+
+## Content-Security-Policy (CSP)
+Il browser esegue solo gli script che il server ha autorizzato per quella singola visita (un codice casuale, «nonce», diverso a ogni richiesta). Uno script iniettato da un attaccante, anche dentro la pagina, **non viene eseguito**.
+- Codice: `src/lib/csp.ts` (policy) e `src/proxy.ts` (nonce + header). Altri header in `next.config.ts`: HSTS, Permissions-Policy (niente fotocamera/microfono/posizione), COOP, X-Frame-Options.
+- Consentito, e solo questo: pagine e file propri; database, WebSocket, immagini e anteprime PDF **solo del tuo deployment Convex** (`NEXT_PUBLIC_CONVEX_URL`). Niente `unsafe-inline`/`unsafe-eval` per gli script in produzione, nessun `<object>`, nessun altro sito può incorniciare il CRM.
+- Collaudato in un browser vero: 12 pagine (anonime e con sessione) senza nessuna violazione, e uno script inline senza nonce, simulando un attacco, viene bloccato.
+- **Se aggiungi un servizio esterno** (analytics, font esterni, mappe, widget) la CSP lo bloccherà: va aggiunto in `src/lib/csp.ts` (e al test `scripts/csp.test.mjs`). In Chrome, la console mostra «Refused to…» con il nome esatto della direttiva da aprire.
+- Il CRM resta dinamico (`force-dynamic`), requisito del nonce: niente pagine statiche in cache.

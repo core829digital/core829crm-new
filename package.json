@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "check:fonts": "node scripts/check-fonts.mjs",
-    "test": "vitest run && node --experimental-strip-types --test scripts/dedupe.test.mjs"
+    "test": "vitest run && node --experimental-strip-types --test scripts/dedupe.test.mjs scripts/csp.test.mjs"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
