@@ -328,7 +328,7 @@ function BackupTools() {
   );
 }
 
-type LeadsReport = { dryRun: boolean; total: number; created: number; skippedExisting: string[]; skippedInvalid: string[] };
+type LeadsReport = { dryRun: boolean; total: number; created: number; skippedExisting: string[]; skippedInFile: string[]; skippedInvalid: string[] };
 
 /** Importa i lead da un foglio Google (File → Scarica → CSV, scheda «Lead»). Anteprima, nessun doppione, nessuna cancellazione. */
 function ImportLeadsCsv() {
@@ -396,12 +396,13 @@ function ImportLeadsCsv() {
             <li>In the file: <b>{report.total}</b></li>
             <li>{report.dryRun ? "To create" : "Created"}: <b>{report.created}</b></li>
             <li>Already in the CRM: <b>{report.skippedExisting.length}</b></li>
+            <li>Repeated inside the file: <b>{report.skippedInFile.length}</b></li>
             <li>Invalid rows: <b>{report.skippedInvalid.length}</b></li>
           </ul>
-          {report.skippedExisting.length > 0 && (
+          {report.skippedExisting.length + report.skippedInFile.length > 0 && (
             <details>
-              <summary className="cursor-pointer font-medium">Skipped: already present</summary>
-              <ul className="list-disc pl-5 text-zinc-600 mt-1">{report.skippedExisting.map((x, i) => <li key={i}>{x}</li>)}</ul>
+              <summary className="cursor-pointer font-medium">Skipped as duplicates</summary>
+              <ul className="list-disc pl-5 text-zinc-600 mt-1">{[...report.skippedExisting, ...report.skippedInFile].map((x, i) => <li key={i}>{x}</li>)}</ul>
             </details>
           )}
         </div>

@@ -26,8 +26,11 @@ export const run = mutation({
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
     if (args.leads.length > MAX) throw new Error(`Too many rows in one file (max ${MAX}).`);
-    const existing = await ctx.db.query("leads").collect();
-    const report = { dryRun: args.dryRun, total: args.leads.length, created: 0, skippedExisting: [] as string[], skippedInvalid: [] as string[] };
+    // Persone gia' nel CRM + quelle che stiamo per creare in questo stesso file (cosi' un doppione DENTRO il file
+    // si riconosce sia nell'anteprima sia nell'importazione, e i numeri coincidono).
+    type Known = { id: string; name: string; company: string; email: string; phone: string; label: string; inFile: boolean };
+    const known: Known[] = (await ctx.db.query("leads").collect()).map((e) => ({ id: e._id, name: e.leadName, company: e.company, email: e.email, phone: e.phone, label: e.leadName, inFile: false }));
+    const report = { dryRun: args.dryRun, total: args.leads.length, created: 0, skippedExisting: [] as string[], skippedInFile: [] as string[], skippedInvalid: [] as string[] };
 
     for (const l of args.leads) {
       const name = l.leadName.trim().slice(0, 200);
@@ -37,22 +40,22 @@ export const run = mutation({
         continue;
       }
       const probe = { id: "new", name, company, email: l.email, phone: l.phone };
-      const dup = existing.find((e) => matchReason({ id: e._id, name: e.leadName, company: e.company, email: e.email, phone: e.phone }, probe) !== null);
+      const dup = known.find((e) => matchReason(e, probe) !== null);
       if (dup) {
-        report.skippedExisting.push(`${company} (già presente come «${dup.leadName}»)`);
+        (dup.inFile ? report.skippedInFile : report.skippedExisting).push(`${company} (${dup.inFile ? "ripetuto nel file" : `già presente come «${dup.label}»`})`);
         continue;
       }
       report.created++;
+      known.push({ id: "new", name, company, email: l.email, phone: l.phone, label: name, inFile: true });
       if (args.dryRun) continue;
       const category = l.category && l.category in clientCategories ? l.category : undefined;
-      const id = await ctx.db.insert("leads", {
+      await ctx.db.insert("leads", {
         leadName: name, company, email: l.email.trim().slice(0, 200), phone: l.phone.trim().slice(0, 60), source: l.source.slice(0, 100),
         setterName: "", closerName: "", leadStatus: STATUSES.has(l.leadStatus) ? l.leadStatus : "New", lossReason: l.lossReason,
         dateCreated: l.dateCreated, offerMade: false, depositAmount: 0, totalDealValue: 0, cashCollected: 0, refundClawbackAmount: 0, commissionPercent: 0, earnings: 0,
         lastTouchDate: l.lastTouchDate, notes: l.notes?.slice(0, 5000), website: l.website?.slice(0, 300),
         category, niche: category && l.niche && clientCategories[category].includes(l.niche) ? l.niche : undefined,
       });
-      existing.push((await ctx.db.get(id))!);
     }
     return report;
   },

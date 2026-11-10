@@ -270,3 +270,31 @@ describe("importazione lead da foglio", () => {
     await expect(t.mutation(api.leadsImport.run, { leads: [L()], dryRun: true })).rejects.toThrow(/Not authenticated/);
   });
 });
+
+describe("importazione lead: nessun doppione nemmeno dentro il file o tra due file", () => {
+  const L = (o: Record<string, unknown> = {}) => ({ leadName: "Monia", company: "Hostaria Il Buco", email: "", phone: "+39057830230", source: "Google Maps", leadStatus: "New", dateCreated: "2026-11-06", ...o });
+
+  it("righe ripetute nello stesso file: anteprima e importazione danno lo stesso risultato", async () => {
+    const t = makeApp();
+    const adm = await t.admin();
+    const rows = [L(), L({ leadName: "Hostaria Il Buco", phone: "0578 30230" }), L({ leadName: "Altro", company: "Altro Locale", phone: "+39111222333" })];
+    const dry = await adm.mutation(api.leadsImport.run, { leads: rows, dryRun: true });
+    expect(dry.created).toBe(2);
+    expect(dry.skippedInFile).toHaveLength(1);
+    const real = await adm.mutation(api.leadsImport.run, { leads: rows, dryRun: false });
+    expect(real.created).toBe(2);
+    expect(await t.run(async (ctx) => (await ctx.db.query("leads").collect()).length)).toBe(2);
+  });
+
+  it("importare due versioni dello stesso foglio (una piu' corta) non crea doppioni", async () => {
+    const t = makeApp();
+    const adm = await t.admin();
+    const completo = [L(), L({ leadName: "Il Rabarbaro", company: "Il Rabarbaro", phone: "+39057864592" }), L({ leadName: "Sette Di Vino", company: "Sette Di Vino", phone: "+390578749092" })];
+    const corto = completo.slice(0, 2);
+    await adm.mutation(api.leadsImport.run, { leads: corto, dryRun: false });
+    const r = await adm.mutation(api.leadsImport.run, { leads: completo, dryRun: false });
+    expect(r.created).toBe(1);
+    expect(r.skippedExisting).toHaveLength(2);
+    expect(await t.run(async (ctx) => (await ctx.db.query("leads").collect()).length)).toBe(3);
+  });
+});
