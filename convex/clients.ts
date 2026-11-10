@@ -33,6 +33,14 @@ export const create = mutation({
     company: v.string(),
     email: v.string(),
     phone: v.string(),
+    category: v.optional(v.string()),
+    niche: v.optional(v.string()),
+    website: v.optional(v.string()),
+    address: v.optional(v.string()),
+    pec: v.optional(v.string()),
+    vatId: v.optional(v.string()),
+    legalRep: v.optional(v.string()),
+    notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const id = await ctx.db.insert("clients", {
@@ -56,6 +64,14 @@ export const update = mutation({
     company: v.optional(v.string()),
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
+    category: v.optional(v.string()),
+    niche: v.optional(v.string()),
+    website: v.optional(v.string()),
+    address: v.optional(v.string()),
+    pec: v.optional(v.string()),
+    vatId: v.optional(v.string()),
+    legalRep: v.optional(v.string()),
+    notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { id, ...fields } = args;
@@ -64,5 +80,34 @@ export const update = mutation({
       if (value !== undefined) updates[key] = value;
     }
     await ctx.db.patch(id, updates);
+  },
+});
+
+/**
+ * Elimina un cliente con tutto cio' che gli appartiene (progetti, attivita', fatture, servizi e relativi file).
+ * Il lead di origine NON viene toccato.
+ */
+export const remove = mutation({
+  args: { id: v.id("clients") },
+  handler: async (ctx, args) => {
+    const client = await ctx.db.get(args.id);
+    if (!client) return { projects: 0, services: 0 };
+    const projects = await ctx.db.query("projects").withIndex("by_clientId", (q) => q.eq("clientId", args.id)).collect();
+    for (const p of projects) {
+      for (const t of await ctx.db.query("projectTasks").withIndex("by_projectId", (q) => q.eq("projectId", p._id)).collect()) await ctx.db.delete(t._id);
+      for (const i of await ctx.db.query("invoices").withIndex("by_projectId", (q) => q.eq("projectId", p._id)).collect()) {
+        if (i.fileId) await ctx.storage.delete(i.fileId);
+        await ctx.db.delete(i._id);
+      }
+      await ctx.db.delete(p._id);
+    }
+    const services = await ctx.db.query("services").withIndex("by_clientId", (q) => q.eq("clientId", args.id)).collect();
+    for (const sv of services) {
+      if (sv.quoteFileId) await ctx.storage.delete(sv.quoteFileId);
+      await ctx.db.delete(sv._id);
+    }
+    await ctx.db.delete(args.id);
+    await notify(ctx, { type: "client_deleted", title: "Client Deleted", message: `${client.clientName} (${client.company})`, link: "/" });
+    return { projects: projects.length, services: services.length };
   },
 });

@@ -72,6 +72,9 @@ export default defineSchema({
     notes: v.optional(v.string()),
     website: v.optional(v.string()),
     socialLinks: v.optional(v.array(v.string())),
+    /** Settore e nicchia del potenziale cliente (cataloghi in convex/lib/catalog.ts). */
+    category: v.optional(v.string()),
+    niche: v.optional(v.string()),
   }).index("by_status", ["leadStatus"])
     .index("by_setter", ["setterName"])
     .index("by_closer", ["closerName"])
@@ -98,7 +101,18 @@ export default defineSchema({
     email: v.string(),
     phone: v.string(),
     createdAt: v.string(),
-  }).index("by_leadId", ["leadId"]),
+    category: v.optional(v.string()),
+    niche: v.optional(v.string()),
+    website: v.optional(v.string()),
+    address: v.optional(v.string()),
+    pec: v.optional(v.string()),
+    vatId: v.optional(v.string()),
+    legalRep: v.optional(v.string()),
+    notes: v.optional(v.string()),
+    /** Id del cliente nel portale (portal.core829.net): rende l'importazione ripetibile senza doppioni. */
+    portalRef: v.optional(v.string()),
+  }).index("by_leadId", ["leadId"])
+    .index("by_portalRef", ["portalRef"]),
 
   projects: defineTable({
     clientId: v.id("clients"),
@@ -110,6 +124,7 @@ export default defineSchema({
     totalValue: v.number(),
     notes: v.optional(v.string()),
     createdAt: v.string(),
+    portalRef: v.optional(v.string()),
   }).index("by_clientId", ["clientId"]),
 
   projectTasks: defineTable({
@@ -128,6 +143,7 @@ export default defineSchema({
     fileName: v.optional(v.string()),
     notes: v.optional(v.string()),
     createdAt: v.string(),
+    portalRef: v.optional(v.string()),
   }).index("by_projectId", ["projectId"]),
 
   users: defineTable({
@@ -171,6 +187,7 @@ export default defineSchema({
     quoteFileName: v.optional(v.string()),
     status: v.string(),
     createdAt: v.string(),
+    portalRef: v.optional(v.string()),
   }).index("by_clientId", ["clientId"]),
 
   announcements: defineTable({

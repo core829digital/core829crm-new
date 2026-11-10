@@ -31,6 +31,8 @@ export const create = mutation({
     notes: v.optional(v.string()),
     website: v.optional(v.string()),
     socialLinks: v.optional(v.array(v.string())),
+    category: v.optional(v.string()),
+    niche: v.optional(v.string()),
     _userId: v.optional(v.string()),
     _userName: v.optional(v.string()),
   },
@@ -88,6 +90,8 @@ export const update = mutation({
     notes: v.optional(v.string()),
     website: v.optional(v.string()),
     socialLinks: v.optional(v.array(v.string())),
+    category: v.optional(v.string()),
+    niche: v.optional(v.string()),
     _userId: v.optional(v.string()),
     _userName: v.optional(v.string()),
   },
@@ -158,6 +162,8 @@ export const update = mutation({
           company: existing.company,
           email: existing.email,
           phone: existing.phone,
+          category: (updates.category as string | undefined) ?? existing.category,
+          niche: (updates.niche as string | undefined) ?? existing.niche,
           createdAt: new Date().toISOString(),
         });
 
@@ -176,9 +182,23 @@ export const update = mutation({
 });
 
 export const remove = mutation({
-  args: { id: v.id("leads") },
+  args: { id: v.id("leads"), _userId: v.optional(v.string()), _userName: v.optional(v.string()) },
   handler: async (ctx, args) => {
+    const lead = await ctx.db.get(args.id);
+    if (!lead) return;
+    // I clienti nati da questo lead restano: si scollega solo il riferimento.
+    const linked = await ctx.db.query("clients").withIndex("by_leadId", (q) => q.eq("leadId", args.id)).collect();
+    for (const c of linked) await ctx.db.patch(c._id, { leadId: undefined });
     await ctx.db.delete(args.id);
+    if (args._userId && args._userName) {
+      await ctx.db.insert("activityLogs", {
+        userId: args._userId,
+        userName: args._userName,
+        action: "Deleted lead",
+        details: `Lead: ${lead.leadName} (${lead.company})`,
+        timestamp: new Date().toISOString(),
+      });
+    }
   },
 });
 

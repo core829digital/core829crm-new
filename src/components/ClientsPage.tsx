@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
+import CategoryNichePicker from "./CategoryNichePicker";
+import { serviceCategories } from "../../convex/lib/catalog";
 import {
   Plus,
   ChevronDown,
@@ -20,6 +22,7 @@ import {
   Check,
   XCircle,
   Briefcase,
+  Pencil,
 } from "lucide-react";
 
 type ModalState =
@@ -27,6 +30,7 @@ type ModalState =
   | { type: "project"; clientId: Id<"clients"> }
   | { type: "invoice"; projectId: Id<"projects"> }
   | { type: "service"; clientId: Id<"clients"> }
+  | { type: "editClient"; clientId: Id<"clients"> }
   | { type: null };
 
 export default function ClientsPage() {
@@ -39,12 +43,13 @@ export default function ClientsPage() {
   const toggleTask = useMutation(api.projects.toggleTask);
   const removeTask = useMutation(api.projects.removeTask);
   const backfill = useMutation(api.migrations.backfillClientsFromWonLeads);
+  const removeClient = useMutation(api.clients.remove);
 
   const [expandedClient, setExpandedClient] = useState<Id<"clients"> | null>(null);
   const [expandedProject, setExpandedProject] = useState<Id<"projects"> | null>(null);
   const [modal, setModal] = useState<ModalState>({ type: null });
 
-  const [newClient, setNewClient] = useState({ clientName: "", company: "", email: "", phone: "" });
+  const [newClient, setNewClient] = useState({ clientName: "", company: "", email: "", phone: "", category: "", niche: "" });
   const [newProject, setNewProject] = useState({ clientId: "" as Id<"clients">, projectName: "", description: "", status: "Active", startDate: "", totalValue: 0 });
   const [submitting, setSubmitting] = useState(false);
 
@@ -64,8 +69,10 @@ export default function ClientsPage() {
       company: newClient.company,
       email: newClient.email,
       phone: newClient.phone,
+      category: newClient.category || undefined,
+      niche: newClient.niche || undefined,
     });
-    setNewClient({ clientName: "", company: "", email: "", phone: "" });
+    setNewClient({ clientName: "", company: "", email: "", phone: "", category: "", niche: "" });
     setSubmitting(false);
     setModal({ type: null });
   };
@@ -139,10 +146,22 @@ export default function ClientsPage() {
               onAddService={() => {
                 setModal({ type: "service", clientId: client._id });
               }}
+              onEdit={() => setModal({ type: "editClient", clientId: client._id })}
+              onDelete={async () => {
+                if (window.confirm(`Delete client "${client.clientName}" (${client.company}) together with ALL its projects, tasks, invoices and services? This cannot be undone.`)) {
+                  await removeClient({ id: client._id });
+                  setExpandedClient(null);
+                }
+              }}
             />
           ))}
         </div>
       )}
+
+      {modal.type === "editClient" && (() => {
+        const target = clients.find((c) => c._id === modal.clientId);
+        return target ? <EditClientModal client={target} onClose={() => setModal({ type: null })} /> : null;
+      })()}
 
       {modal.type === "service" && (
         <ServiceModal
@@ -178,6 +197,7 @@ export default function ClientsPage() {
               value={newClient.phone}
               onChange={(e) => setNewClient({ ...newClient, phone: e.target.value })}
             />
+            <CategoryNichePicker category={newClient.category} niche={newClient.niche} onChange={(v) => setNewClient({ ...newClient, ...v })} />
             <button
               onClick={handleCreateClient}
               disabled={submitting || !newClient.clientName || !newClient.company}
@@ -255,9 +275,9 @@ function ClientCard({
   client, expanded, onToggle, expandedProject, onToggleProject,
   onAddProject, onAddTask,
   toggleTask, removeTask, updateProject, removeProject, onAddInvoice,
-  onAddService,
+  onAddService, onEdit, onDelete,
 }: {
-  client: { _id: Id<"clients">; clientName: string; company: string; email: string; phone: string; createdAt: string };
+  client: { _id: Id<"clients">; clientName: string; company: string; email: string; phone: string; createdAt: string; category?: string; niche?: string; website?: string; address?: string; pec?: string; vatId?: string; legalRep?: string; notes?: string };
   expanded: boolean;
   onToggle: () => void;
   expandedProject: Id<"projects"> | null;
@@ -270,6 +290,8 @@ function ClientCard({
   removeProject: ReturnType<typeof useMutation<typeof api.projects.remove>>;
   onAddInvoice: (projectId: Id<"projects">) => void;
   onAddService: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
 }) {
   const projects = useQuery(api.projects.getByClientId, { clientId: client._id });
 
@@ -284,6 +306,11 @@ function ClientCard({
           <div>
             <span className="font-semibold">{client.clientName}</span>
             <span className="text-zinc-400 text-sm ml-2">{client.company}</span>
+            {client.category && (
+              <span className="ml-2 text-[10px] bg-zinc-100 text-zinc-600 px-1.5 py-0.5 rounded align-middle">
+                {client.category}{client.niche ? ` · ${client.niche}` : ""}
+              </span>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-3 text-sm text-zinc-400">
@@ -311,6 +338,39 @@ function ClientCard({
               <span className="text-zinc-400 text-xs">Created</span>
               <p>{new Date(client.createdAt).toLocaleDateString()}</p>
             </div>
+            {client.website && (
+              <div>
+                <span className="text-zinc-400 text-xs">Website</span>
+                <p className="break-all">{client.website}</p>
+              </div>
+            )}
+            {client.address && (
+              <div>
+                <span className="text-zinc-400 text-xs">Address</span>
+                <p>{client.address}</p>
+              </div>
+            )}
+            {client.vatId && (
+              <div>
+                <span className="text-zinc-400 text-xs">VAT / Tax ID</span>
+                <p>{client.vatId}</p>
+              </div>
+            )}
+            {client.legalRep && (
+              <div>
+                <span className="text-zinc-400 text-xs">Legal representative</span>
+                <p>{client.legalRep}</p>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button onClick={onEdit} className="flex items-center gap-1 text-sm text-zinc-600 hover:text-black font-medium">
+              <Pencil size={14} /> Edit client
+            </button>
+            <button onClick={onDelete} className="flex items-center gap-1 text-sm text-zinc-400 hover:text-red-600 font-medium">
+              <Trash2 size={14} /> Delete client
+            </button>
           </div>
 
           <div className="flex items-center justify-between">
@@ -368,6 +428,7 @@ function ServicesList({ clientId }: { clientId: Id<"clients"> }) {
   const removeService = useMutation(api.services.remove);
 
   const [viewQuote, setViewQuote] = useState<{ url: string; fileName: string } | null>(null);
+  const [editing, setEditing] = useState<Id<"services"> | null>(null);
 
   if (!services) return <div className="text-sm text-zinc-400">Loading...</div>;
 
@@ -385,8 +446,13 @@ function ServicesList({ clientId }: { clientId: Id<"clients"> }) {
           onDecline={() => updateStatus({ id: s._id, status: "Declined" })}
           onRemove={() => { if (confirm("Remove this service?")) removeService({ id: s._id }); }}
           onViewQuote={(url: string) => setViewQuote({ url, fileName: s.quoteFileName || "Quote.pdf" })}
+          onEdit={() => setEditing(s._id)}
         />
       ))}
+      {editing && (() => {
+        const target = services.find((x) => x._id === editing);
+        return target ? <EditServiceModal service={target} onClose={() => setEditing(null)} /> : null;
+      })()}
       {viewQuote && (
         <PdfPreviewModal
           url={viewQuote.url}
@@ -399,7 +465,7 @@ function ServicesList({ clientId }: { clientId: Id<"clients"> }) {
 }
 
 function ServiceRow({
-  service, onAccept, onDecline, onRemove, onViewQuote,
+  service, onAccept, onDecline, onRemove, onViewQuote, onEdit,
 }: {
   service: {
     _id: Id<"services">;
@@ -415,6 +481,7 @@ function ServiceRow({
   onDecline: () => void;
   onRemove: () => void;
   onViewQuote: (url: string) => void;
+  onEdit: () => void;
 }) {
   const quoteUrl = useQuery(
     api.services.getFileUrl,
@@ -467,6 +534,9 @@ function ServiceRow({
             </button>
           </>
         )}
+        <button onClick={onEdit} className="p-1.5 text-zinc-400 hover:text-zinc-700 rounded-md transition-colors" title="Edit">
+          <Pencil size={14} />
+        </button>
         <button
           onClick={onRemove}
           className="p-1.5 text-zinc-400 hover:text-red-500 rounded-md transition-colors"
@@ -503,39 +573,7 @@ function ServiceModal({ clientId, onClose }: { clientId: Id<"clients">; onClose:
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
 
-  const serviceOptions: Record<string, string[]> = {
-    "Software Development": [
-      "Web Application", "Mobile App (iOS)", "Mobile App (Android)",
-      "API Development", "Database Design & Architecture",
-      "Cloud Migration & Infrastructure", "DevOps & CI/CD Setup",
-      "Code Audit & Refactoring", "UI/UX Design & Prototyping",
-      "E-commerce Platform", "CMS Development", "Custom CRM Development",
-      "SaaS Platform Development", "Blockchain / DLT Solution",
-      "Smart Contract Development", "QA & Automated Testing",
-      "Security Audit & Penetration Testing",
-      "Legacy System Migration", "Microservices Architecture",
-      "Real-time System (WebSocket/SSE)",
-    ],
-    "Marketing Services": [
-      "SEO Optimization", "PPC Campaign Management",
-      "Social Media Management", "Content Marketing Strategy",
-      "Email Marketing & Automation", "Brand Strategy & Identity",
-      "Market Research & Analysis", "Conversion Rate Optimization",
-      "Marketing Automation Setup", "Influencer Marketing",
-      "Video Production & Editing", "Copywriting & Content Creation",
-      "PR & Communications", "Analytics & Reporting Dashboard",
-      "Growth Strategy Consulting",
-    ],
-    "AI Services": [
-      "Custom AI Model Development", "Chatbot / Conversational AI",
-      "Data Pipeline & ETL Engineering", "NLP / Text Analytics Solution",
-      "Computer Vision System", "RAG (Retrieval Augmented Generation)",
-      "AI Consulting & Strategy", "ML Ops & Model Deployment",
-      "Predictive Analytics Engine", "Recommendation System",
-      "Document Intelligence (OCR/Extraction)",
-      "Voice AI / Speech Recognition",
-    ],
-  };
+  const serviceOptions = serviceCategories;
 
   const currentServices = serviceOptions[category] ?? [];
 
@@ -579,9 +617,9 @@ function ServiceModal({ clientId, onClose }: { clientId: Id<"clients">; onClose:
           value={category}
           onChange={(e) => { setCategory(e.target.value); setServiceName(""); }}
         >
-          <option>Software Development</option>
-          <option>Marketing Services</option>
-          <option>AI Services</option>
+          {Object.keys(serviceCategories).map((c) => (
+            <option key={c} value={c}>{c}</option>
+          ))}
         </select>
 
         <select
@@ -662,6 +700,7 @@ function ProjectCard({
   };
 
   const [editingStatus, setEditingStatus] = useState(false);
+  const [editingProject, setEditingProject] = useState(false);
   const [localTask, setLocalTask] = useState("");
 
   const handleStatusChange = async (newStatus: string) => {
@@ -817,12 +856,18 @@ function ProjectCard({
             )}
           </div>
 
-          <button
-            onClick={handleRemoveProject}
-            className="text-xs text-zinc-400 hover:text-red-500 transition-colors"
-          >
-            Delete project
-          </button>
+          <div className="flex items-center gap-4">
+            <button onClick={() => setEditingProject(true)} className="text-xs text-zinc-500 hover:text-black transition-colors flex items-center gap-1">
+              <Pencil size={12} /> Edit project
+            </button>
+            <button
+              onClick={handleRemoveProject}
+              className="text-xs text-zinc-400 hover:text-red-500 transition-colors"
+            >
+              Delete project
+            </button>
+          </div>
+          {editingProject && <EditProjectModal project={project} onClose={() => setEditingProject(false)} />}
         </div>
       )}
     </div>
@@ -924,6 +969,148 @@ function InvoiceRow({ invoice }: {
         />
       )}
     </>
+  );
+}
+
+function EditClientModal({ client, onClose }: {
+  client: { _id: Id<"clients">; clientName: string; company: string; email: string; phone: string; category?: string; niche?: string; website?: string; address?: string; pec?: string; vatId?: string; legalRep?: string; notes?: string };
+  onClose: () => void;
+}) {
+  const update = useMutation(api.clients.update);
+  const [f, setF] = useState({
+    clientName: client.clientName, company: client.company, email: client.email, phone: client.phone,
+    category: client.category ?? "", niche: client.niche ?? "", website: client.website ?? "", address: client.address ?? "",
+    pec: client.pec ?? "", vatId: client.vatId ?? "", legalRep: client.legalRep ?? "", notes: client.notes ?? "",
+  });
+  const [saving, setSaving] = useState(false);
+  const cls = "w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm";
+  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setF({ ...f, [k]: e.target.value });
+  return (
+    <Modal onClose={onClose} title="Edit Client">
+      <div className="space-y-3 max-h-[70vh] overflow-y-auto">
+        <input className={cls} placeholder="Client name *" value={f.clientName} onChange={set("clientName")} />
+        <input className={cls} placeholder="Company *" value={f.company} onChange={set("company")} />
+        <input className={cls} placeholder="Email" value={f.email} onChange={set("email")} />
+        <input className={cls} placeholder="Phone" value={f.phone} onChange={set("phone")} />
+        <CategoryNichePicker category={f.category} niche={f.niche} onChange={(v) => setF({ ...f, ...v })} />
+        <input className={cls} placeholder="Website" value={f.website} onChange={set("website")} />
+        <input className={cls} placeholder="Address" value={f.address} onChange={set("address")} />
+        <input className={cls} placeholder="PEC" value={f.pec} onChange={set("pec")} />
+        <input className={cls} placeholder="VAT / Tax ID" value={f.vatId} onChange={set("vatId")} />
+        <input className={cls} placeholder="Legal representative" value={f.legalRep} onChange={set("legalRep")} />
+        <textarea className={cls} rows={3} placeholder="Notes" value={f.notes} onChange={set("notes")} />
+        <button
+          disabled={saving || !f.clientName.trim() || !f.company.trim()}
+          onClick={async () => {
+            setSaving(true);
+            try {
+              await update({ id: client._id, ...f, clientName: f.clientName.trim(), company: f.company.trim() });
+              onClose();
+            } finally {
+              setSaving(false);
+            }
+          }}
+          className="w-full bg-black text-white py-2 rounded-lg text-sm font-medium hover:bg-zinc-800 disabled:opacity-50"
+        >
+          {saving ? <Loader2 size={16} className="animate-spin mx-auto" /> : "Save changes"}
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
+function EditProjectModal({ project, onClose }: {
+  project: { _id: Id<"projects">; projectName: string; description: string; status: string; startDate: string; deadline?: string; totalValue: number; notes?: string };
+  onClose: () => void;
+}) {
+  const update = useMutation(api.projects.update);
+  const day = (iso?: string) => (iso ? iso.slice(0, 10) : "");
+  const [f, setF] = useState({ projectName: project.projectName, description: project.description, status: project.status, startDate: day(project.startDate), deadline: day(project.deadline), totalValue: project.totalValue, notes: project.notes ?? "" });
+  const [saving, setSaving] = useState(false);
+  const cls = "w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm";
+  return (
+    <Modal onClose={onClose} title="Edit Project">
+      <div className="space-y-3">
+        <input className={cls} placeholder="Project name *" value={f.projectName} onChange={(e) => setF({ ...f, projectName: e.target.value })} />
+        <textarea className={cls} rows={3} placeholder="Description" value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} />
+        <div className="flex gap-3">
+          <select className={cls} value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })}>
+            <option>Active</option>
+            <option>On-Hold</option>
+            <option>Completed</option>
+            <option>Cancelled</option>
+          </select>
+          <input type="number" className={cls} placeholder="Total value" value={f.totalValue || ""} onChange={(e) => setF({ ...f, totalValue: Number(e.target.value) })} />
+        </div>
+        <div className="flex gap-3">
+          <input type="date" aria-label="Start date" className={cls} value={f.startDate} onChange={(e) => setF({ ...f, startDate: e.target.value })} />
+          <input type="date" aria-label="Deadline" className={cls} value={f.deadline} onChange={(e) => setF({ ...f, deadline: e.target.value })} />
+        </div>
+        <textarea className={cls} rows={2} placeholder="Notes" value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} />
+        <button
+          disabled={saving || !f.projectName.trim()}
+          onClick={async () => {
+            setSaving(true);
+            try {
+              await update({ id: project._id, projectName: f.projectName.trim(), description: f.description, status: f.status, startDate: f.startDate || undefined, deadline: f.deadline || undefined, totalValue: f.totalValue, notes: f.notes });
+              onClose();
+            } finally {
+              setSaving(false);
+            }
+          }}
+          className="w-full bg-black text-white py-2 rounded-lg text-sm font-medium hover:bg-zinc-800 disabled:opacity-50"
+        >
+          {saving ? <Loader2 size={16} className="animate-spin mx-auto" /> : "Save changes"}
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
+function EditServiceModal({ service, onClose }: {
+  service: { _id: Id<"services">; category: string; serviceName: string; description?: string; quoteAmount: number };
+  onClose: () => void;
+}) {
+  const update = useMutation(api.services.update);
+  const [category, setCategory] = useState(service.category);
+  const [serviceName, setServiceName] = useState(service.serviceName);
+  const [description, setDescription] = useState(service.description ?? "");
+  const [quoteAmount, setQuoteAmount] = useState(service.quoteAmount);
+  const [saving, setSaving] = useState(false);
+  const cls = "w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm";
+  const options = serviceCategories[category] ?? [];
+  return (
+    <Modal onClose={onClose} title="Edit Service">
+      <div className="space-y-3">
+        <select className={cls} value={category} onChange={(e) => setCategory(e.target.value)}>
+          {[...new Set([...Object.keys(serviceCategories), category])].map((c) => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
+        <select className={cls} value={serviceName} onChange={(e) => setServiceName(e.target.value)}>
+          {[...new Set([...options, serviceName])].map((n) => (
+            <option key={n} value={n}>{n}</option>
+          ))}
+        </select>
+        <textarea className={cls} rows={2} placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
+        <input type="number" className={cls} placeholder="Quote amount" value={quoteAmount || ""} onChange={(e) => setQuoteAmount(Number(e.target.value))} />
+        <button
+          disabled={saving || !serviceName || quoteAmount <= 0}
+          onClick={async () => {
+            setSaving(true);
+            try {
+              await update({ id: service._id, category, serviceName, description, quoteAmount });
+              onClose();
+            } finally {
+              setSaving(false);
+            }
+          }}
+          className="w-full bg-black text-white py-2 rounded-lg text-sm font-medium hover:bg-zinc-800 disabled:opacity-50"
+        >
+          {saving ? <Loader2 size={16} className="animate-spin mx-auto" /> : "Save changes"}
+        </button>
+      </div>
+    </Modal>
   );
 }
 

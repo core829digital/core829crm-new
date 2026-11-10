@@ -1,5 +1,6 @@
 "use client";
 
+import CategoryNichePicker from "./CategoryNichePicker";
 import { useState, useMemo } from "react";
 import { X } from "lucide-react";
 import { Id } from "convex/_generated/dataModel";
@@ -62,6 +63,8 @@ interface LeadData {
   lastTouchDate?: string;
   website?: string;
   socialLinks?: string[];
+  category?: string;
+  niche?: string;
 }
 
 interface LeadModalProps {
@@ -100,6 +103,8 @@ function defaultForm(lead?: LeadData | null): LeadData {
     lastTouchDate: lead?.lastTouchDate || "",
     website: lead?.website || "",
     socialLinks: lead?.socialLinks?.length ? [...lead.socialLinks] : [""],
+    category: lead?.category || "",
+    niche: lead?.niche || "",
   };
 }
 
@@ -136,6 +141,15 @@ export default function LeadModal({ lead, onClose, onSave, onDelete }: LeadModal
 
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-medium text-gray-600 mb-1">Category / Niche</label>
+              <CategoryNichePicker
+                className="select"
+                category={form.category}
+                niche={form.niche}
+                onChange={(v) => setForm((prev) => ({ ...prev, category: v.category, niche: v.niche }))}
+              />
+            </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Lead Name *</label>
               <input className="input" value={form.leadName} onChange={(e) => update("leadName", e.target.value)} required />
@@ -338,7 +352,7 @@ export default function LeadModal({ lead, onClose, onSave, onDelete }: LeadModal
               {isEditing && onDelete && (
                 <button
                   type="button"
-                  onClick={() => onDelete(lead._id!)}
+                  onClick={() => { if (window.confirm(`Delete lead "${lead.leadName}"? This cannot be undone.`)) onDelete(lead._id!); }}
                   className="text-red-600 hover:text-red-800 text-sm font-medium"
                 >
                   Delete Lead

@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { useAuth } from "./AuthContext";
 import NotificationBell from "./NotificationBell";
-import { LayoutDashboard, KanbanSquare, Table2, TrendingUp, CalendarDays, Users, Shield, LogOut, MessageCircle } from "lucide-react";
+import { LayoutDashboard, KanbanSquare, Table2, TrendingUp, CalendarDays, Users, Shield, LogOut, MessageCircle, DatabaseZap } from "lucide-react";
 
 const links = [
   { href: "/", label: "Kanban", icon: KanbanSquare },
@@ -51,6 +51,20 @@ export default function Navigation() {
               </Link>
             );
           })}
+
+          {user?.userId === "00001" && (
+            <Link
+              href="/data"
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 sm:py-1.5 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${
+                pathname === "/data"
+                  ? "bg-red-600 text-white"
+                  : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+              }`}
+            >
+              <DatabaseZap size={16} />
+              <span className="hidden sm:inline">Data</span>
+            </Link>
+          )}
 
           {user?.userId === "00001" && (
             <Link

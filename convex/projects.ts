@@ -51,6 +51,7 @@ export const update = mutation({
     projectName: v.optional(v.string()),
     description: v.optional(v.string()),
     status: v.optional(v.string()),
+    startDate: v.optional(v.string()),
     deadline: v.optional(v.string()),
     totalValue: v.optional(v.number()),
     notes: v.optional(v.string()),
@@ -77,6 +78,12 @@ export const update = mutation({
 export const remove = mutation({
   args: { id: v.id("projects") },
   handler: async (ctx, args) => {
+    // Come dice la conferma nell'interfaccia: via anche attivita' e fatture (e i loro file).
+    for (const t of await ctx.db.query("projectTasks").withIndex("by_projectId", (q) => q.eq("projectId", args.id)).collect()) await ctx.db.delete(t._id);
+    for (const i of await ctx.db.query("invoices").withIndex("by_projectId", (q) => q.eq("projectId", args.id)).collect()) {
+      if (i.fileId) await ctx.storage.delete(i.fileId);
+      await ctx.db.delete(i._id);
+    }
     await ctx.db.delete(args.id);
   },
 });

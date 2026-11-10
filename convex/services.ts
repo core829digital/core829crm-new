@@ -2,39 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { notify } from "./notify";
 
-export const serviceCategories = {
-  "Software Development": [
-    "Web Application", "Mobile App (iOS)", "Mobile App (Android)",
-    "API Development", "Database Design & Architecture",
-    "Cloud Migration & Infrastructure", "DevOps & CI/CD Setup",
-    "Code Audit & Refactoring", "UI/UX Design & Prototyping",
-    "E-commerce Platform", "CMS Development", "Custom CRM Development",
-    "SaaS Platform Development", "Blockchain / DLT Solution",
-    "Smart Contract Development", "QA & Automated Testing",
-    "Security Audit & Penetration Testing",
-    "Legacy System Migration", "Microservices Architecture",
-    "Real-time System (WebSocket/SSE)",
-  ],
-  "Marketing Services": [
-    "SEO Optimization", "PPC Campaign Management",
-    "Social Media Management", "Content Marketing Strategy",
-    "Email Marketing & Automation", "Brand Strategy & Identity",
-    "Market Research & Analysis", "Conversion Rate Optimization",
-    "Marketing Automation Setup", "Influencer Marketing",
-    "Video Production & Editing", "Copywriting & Content Creation",
-    "PR & Communications", "Analytics & Reporting Dashboard",
-    "Growth Strategy Consulting",
-  ],
-  "AI Services": [
-    "Custom AI Model Development", "Chatbot / Conversational AI",
-    "Data Pipeline & ETL Engineering", "NLP / Text Analytics Solution",
-    "Computer Vision System", "RAG (Retrieval Augmented Generation)",
-    "AI Consulting & Strategy", "ML Ops & Model Deployment",
-    "Predictive Analytics Engine", "Recommendation System",
-    "Document Intelligence (OCR/Extraction)",
-    "Voice AI / Speech Recognition",
-  ],
-} as Record<string, string[]>;
+export { serviceCategories } from "./lib/catalog";
 
 export const listByClient = query({
   args: { clientId: v.id("clients") },
@@ -103,6 +71,22 @@ export const updateStatus = mutation({
         message: `${service.serviceName} was declined`,
       });
     }
+  },
+});
+
+export const update = mutation({
+  args: {
+    id: v.id("services"),
+    category: v.optional(v.string()),
+    serviceName: v.optional(v.string()),
+    description: v.optional(v.string()),
+    quoteAmount: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const { id, ...fields } = args;
+    const updates: Record<string, unknown> = {};
+    for (const [k, val] of Object.entries(fields)) if (val !== undefined) updates[k] = val;
+    if (Object.keys(updates).length) await ctx.db.patch(id, updates);
   },
 });
 
