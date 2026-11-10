@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useMutation } from "convex/react";
-import { api } from "convex/_generated/api";
 import { useAuth } from "@/components/AuthContext";
 import { Loader2, LogIn } from "lucide-react";
 import Image from "next/image";
@@ -13,8 +11,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const login = useMutation(api.users.login);
-  const { setUser } = useAuth();
+  const { signIn } = useAuth();
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -22,17 +19,14 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      const res = await login({ userId: userId.trim(), password });
+      const res = await signIn(userId.trim(), password);
       if (!res.ok) {
-        setError("Invalid ID or password");
+        setError(res.error);
         return;
       }
-      const { ok: _ok, ...user } = res;
-      void _ok;
-      setUser(user);
       router.push("/");
-    } catch (e) {
-      setError(e instanceof Error && /Too many/.test(e.message) ? "Too many attempts. Try again in 15 minutes." : "Invalid ID or password");
+    } catch {
+      setError("Invalid ID or password");
     } finally {
       setLoading(false);
     }

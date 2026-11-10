@@ -2,7 +2,8 @@ import { v } from "convex/values";
 import { mutation, query, type MutationCtx } from "./_generated/server";
 import { notify } from "./notify";
 import { assertSelf, requireAdmin, requireUser } from "./lib/authz";
-import { signSessionToken } from "./lib/jwt";
+import { SESSION_SECONDS } from "./lib/authConst";
+import { hashSecret, newSessionSecret } from "./lib/sessionSecret";
 import { assertStrongPassword, generateSalt, hashPassword, verifyPassword } from "./lib/password";
 
 async function generateUniqueUserId(ctx: MutationCtx): Promise<string> {
@@ -73,12 +74,15 @@ export const login = mutation({
       await ctx.db.patch(user._id, { salt, passwordHash: await hashPassword(args.password, salt) });
     }
 
-    // Token firmato dal server: da qui in poi e' lui a dire chi sei, non il browser.
-    const token = await signSessionToken(user._id, user.userId);
+    // Sessione: il segreto va nel cookie HttpOnly (lo imposta il server Next); nel database resta solo il suo hash.
+    const sessionSecret = newSessionSecret();
+    const now = Date.now();
+    await ctx.db.insert("sessions", { userId: user._id, secretHash: await hashSecret(sessionSecret), createdAt: now, expiresAt: now + SESSION_SECONDS * 1000 });
 
     return {
       ok: true as const,
-      token,
+      sessionSecret,
+      maxAgeSeconds: SESSION_SECONDS,
       _id: user._id,
       userId: user.userId,
       name: user.name,
@@ -168,6 +172,8 @@ export const updateUser = mutation({
       const salt = generateSalt();
       updates.passwordHash = await hashPassword(password, salt);
       updates.salt = salt;
+      // Password reimpostata dall'amministratore: chi era connesso con la vecchia viene scollegato.
+      for (const s of await ctx.db.query("sessions").withIndex("by_userId", (q) => q.eq("userId", id)).collect()) await ctx.db.delete(s._id);
     }
     await ctx.db.patch(id, updates);
   },
@@ -196,6 +202,12 @@ export const changePassword = mutation({
     const newSalt = generateSalt();
     const newHash = await hashPassword(args.newPassword, newSalt);
     await ctx.db.patch(user._id, { passwordHash: newHash, salt: newSalt });
+    // Cambiata la password, tutte le altre sessioni di questo utente (altri browser/dispositivi) vengono chiuse.
+    const identity = await ctx.auth.getUserIdentity();
+    const currentSid = typeof identity?.sid === "string" ? identity.sid : undefined;
+    for (const s of await ctx.db.query("sessions").withIndex("by_userId", (q) => q.eq("userId", user._id)).collect()) {
+      if (s._id !== currentSid) await ctx.db.delete(s._id);
+    }
     return { ok: true as const };
   },
 });

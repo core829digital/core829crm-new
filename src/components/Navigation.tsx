@@ -19,10 +19,10 @@ const links = [
 
 export default function Navigation() {
   const pathname = usePathname();
-  const { user, setUser } = useAuth();
+  const { user, signOut } = useAuth();
 
   const handleLogout = () => {
-    setUser(null);
+    void signOut();
   };
 
   return (

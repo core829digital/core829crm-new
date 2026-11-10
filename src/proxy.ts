@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { buildCsp, generateNonce } from "@/lib/csp";
+import { SESSION_COOKIE } from "@/lib/session";
 
 /** Il CRM e' fatto di pagine: bastano questi metodi. Tutto il resto viene rifiutato prima di arrivare all'app. */
 const ALLOWED_METHODS = new Set(["GET", "HEAD", "POST", "OPTIONS"]);
@@ -7,6 +8,14 @@ const ALLOWED_METHODS = new Set(["GET", "HEAD", "POST", "OPTIONS"]);
 export function proxy(request: NextRequest) {
   if (!ALLOWED_METHODS.has(request.method)) {
     return new NextResponse(null, { status: 405, headers: { Allow: "GET, HEAD, POST, OPTIONS" } });
+  }
+
+  // Primo filtro (comodita'): senza cookie di sessione si va direttamente al login. La protezione vera dei dati
+  // e' nel database, che controlla il token ad ogni richiesta.
+  const { pathname } = request.nextUrl;
+  const isPublic = pathname === "/login" || pathname.startsWith("/api/auth/") || /\.[a-zA-Z0-9]+$/.test(pathname);
+  if (!isPublic && !request.cookies.get(SESSION_COOKIE)) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   const nonce = generateNonce();

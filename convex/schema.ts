@@ -199,6 +199,16 @@ export default defineSchema({
     createdAt: v.string(),
   }).index("by_active", ["isActive"]),
 
+  /** Sessioni di accesso. Il segreto vive solo nel cookie HttpOnly del browser; qui c'e' solo il suo hash. */
+  sessions: defineTable({
+    userId: v.id("users"),
+    secretHash: v.string(),
+    createdAt: v.number(),
+    expiresAt: v.number(),
+  }).index("by_secretHash", ["secretHash"])
+    .index("by_userId", ["userId"])
+    .index("by_expiresAt", ["expiresAt"]),
+
   loginAttempts: defineTable({
     userId: v.string(),
     ip: v.optional(v.string()),

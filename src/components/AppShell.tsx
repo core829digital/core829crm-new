@@ -8,17 +8,20 @@ import AnnouncementBanner from "./AnnouncementBanner";
 
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const isLoginPage = pathname === "/login";
 
   useEffect(() => {
-    if (!user && !isLoginPage) {
+    if (!loading && !user && !isLoginPage) {
       router.replace("/login");
     }
-  }, [user, isLoginPage, router]);
+    // Gia' collegato e apre /login: si va alla home.
+    if (!loading && user && isLoginPage) router.replace("/");
+  }, [loading, user, isLoginPage, router]);
 
+  if (loading) return null;
   if (!user && !isLoginPage) return null;
 
   if (isLoginPage) {
