@@ -96,7 +96,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           body: JSON.stringify({ userId, password }),
         });
         if (res.status === 429) return { ok: false, error: "Too many attempts. Try again in 15 minutes." };
-        if (!res.ok) return { ok: false, error: "Invalid ID or password" };
+        if (res.status === 401) return { ok: false, error: "Invalid ID or password" };
+        // Qualsiasi altro errore NON e' una password sbagliata: il server o il database non hanno risposto come previsto.
+        if (!res.ok) return { ok: false, error: "Login unavailable: the server could not reach the database. Check NEXT_PUBLIC_CONVEX_URL and the Convex deploy." };
         const token = await fetchToken();
         return token ? { ok: true } : { ok: false, error: "Could not start the session" };
       } catch {
