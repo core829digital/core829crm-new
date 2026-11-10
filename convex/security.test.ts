@@ -145,7 +145,7 @@ describe("sessioni (cookie HttpOnly) e token brevi", () => {
     const [h, p, sig] = m.token.split(".");
     const payload = JSON.parse(new TextDecoder().decode(b64(p)));
     expect(JSON.parse(new TextDecoder().decode(b64(h)))).toMatchObject({ alg: "RS256" });
-    expect(payload).toMatchObject({ iss: "core829-crm", aud: "core829-crm-app", sub: uid, userId: "20002" });
+    expect(payload).toMatchObject({ iss: "https://b2b.core829.net", aud: "core829-crm-app", sub: uid, userId: "20002" });
     expect(payload.exp - payload.iat).toBe(10 * 60);
     const session = (await t.run((ctx) => ctx.db.query("sessions").collect()))[0];
     expect(payload.sid).toBe(session._id);
