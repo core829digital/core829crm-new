@@ -9,6 +9,9 @@ describe("foglio lead: nicchie e campi aggiuntivi", () => {
     ["Studio dentistico", "Dental clinic"],
     ["Studio legale", "Law firm"],
     ["Poliambulatorio", "Medical clinic"],
+    ["Serramentista", "Windows & doors (serramenti)"],
+    ["Impresa edile", "Construction company"],
+    ["Ristrutturazioni", "Renovation / contractor"],
   ])("%s -> %s", (industry, niche) => {
     expect(mapSheetRow({ "Company name": "X", Industry: industry }, "2026-11-13")?.niche).toBe(niche);
   });

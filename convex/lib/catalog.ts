@@ -74,7 +74,7 @@ export const clientCategories: Record<string, string[]> = {
     "Medical clinic", "Dental clinic", "Aesthetic clinic / medspa", "Beauty salon / barber", "Spa / wellness center", "Gym / fitness studio", "Physiotherapy / rehab", "Psychology / coaching", "Veterinary", "Pharmacy / parapharmacy", "Nutrition / dietitian",
   ],
   "Real Estate & Construction": [
-    "Real estate agency", "Property developer", "Architect / engineering studio", "Interior design", "Construction company", "Renovation / contractor", "Property management", "Building materials", "Home services (plumbing, electrical, HVAC)",
+    "Real estate agency", "Property developer", "Architect / engineering studio", "Interior design", "Construction company", "Renovation / contractor", "Windows & doors (serramenti)", "Property management", "Building materials", "Home services (plumbing, electrical, HVAC)",
   ],
   "Professional Services": [
     "Law firm", "Accounting / tax advisor", "Business consulting", "Notary", "HR / recruiting", "Insurance agency", "Translation / language services", "Marketing agency", "Training / consulting",
