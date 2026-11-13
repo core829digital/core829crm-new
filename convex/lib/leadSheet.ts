@@ -16,8 +16,14 @@ const INDUSTRY: [RegExp, string, string][] = [
   [/macelleri/i, "Hospitality & Food", "Butcher / deli"],
   [/ferramenta/i, "Retail & E-commerce", "Hardware store"],
   [/officina|gommist|autofficina/i, "Automotive & Transport", "Auto repair / body shop"],
-  [/parrucchier|barbier/i, "Health & Wellness", "Beauty salon / barber"],
-  [/estetic/i, "Health & Wellness", "Aesthetic clinic / medspa"],
+  [/parrucchier|barbier|barber|hair/i, "Health & Wellness", "Beauty salon / barber"],
+  [/estetic|beauty|nail|unghie/i, "Health & Wellness", "Aesthetic clinic / medspa"],
+  [/dentist|odontoiatr|ortodon/i, "Health & Wellness", "Dental clinic"],
+  [/fisioterap|osteopat/i, "Health & Wellness", "Physiotherapy / rehab"],
+  [/medic|poliambulator|clinica/i, "Health & Wellness", "Medical clinic"],
+  [/psicolog/i, "Health & Wellness", "Psychology / coaching"],
+  [/avvocat|studio legale|legale/i, "Professional Services", "Law firm"],
+  [/commercialist|consulente del lavoro/i, "Professional Services", "Accounting / tax advisor"],
 ];
 
 const STATUS: Record<string, { leadStatus: string; lossReason?: string }> = {
@@ -58,14 +64,15 @@ export function mapSheetRow(row: Record<string, string>, isoDate: string): Sheet
     clean(row["Orario richiamo"]) && `Richiamo: ${clean(row["Orario richiamo"])}`,
     clean(row["Giorno piano"]) && `Giorno piano: ${clean(row["Giorno piano"])}`,
     clean(row["Tentativi"]) && `Tentativi: ${clean(row["Tentativi"])}`,
+    clean(row["Fonte (link)"]) && `Fonte: ${clean(row["Fonte (link)"])}`,
   ].filter(Boolean).join("\n");
 
   return {
     leadName: named || company,
     company,
-    email: "",
+    email: clean(row["Email"]),
     phone: clean(row["Phone number"]),
-    source: "Google Maps (scheda non rivendicata)",
+    source: clean(row["Source"]) || "Google Maps (scheda non rivendicata)",
     leadStatus: st.leadStatus,
     lossReason: st.lossReason,
     dateCreated: isoDate,
