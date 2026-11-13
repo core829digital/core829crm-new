@@ -298,3 +298,41 @@ describe("importazione lead: nessun doppione nemmeno dentro il file o tra due fi
     expect(await t.run(async (ctx) => (await ctx.db.query("leads").collect()).length)).toBe(3);
   });
 });
+
+describe("eliminazione multipla dei lead", () => {
+  it("solo l'amministratore; elimina i lead scelti, scollega clienti e chat, registra l'attività", async () => {
+    const t = makeApp();
+    const admin = await t.admin();
+    const { a, b, keep, memberId } = await t.run(async (ctx) => {
+      const a = await ctx.db.insert("leads", lead("Ristorante A", "Ristorante A"));
+      const b = await ctx.db.insert("leads", lead("Bar B", "Bar B"));
+      const keep = await ctx.db.insert("leads", lead("Salone C", "Salone C"));
+      await ctx.db.insert("clients", { ...client("Cli", "Ristorante A"), leadId: a });
+      await ctx.db.insert("conversations", { type: "lead", leadId: b, createdBy: "00001", createdAt: "x" });
+      const memberId = await ctx.db.insert("users", { userId: "00002", name: "M", surname: "N", passwordHash: "x", salt: "y", role: "setter", createdAt: "x" });
+      return { a, b, keep, memberId };
+    });
+    const member = t.withIdentity({ subject: memberId, issuer: "https://test.local", tokenIdentifier: `https://test.local|${memberId}` });
+    await expect(member.mutation(api.leads.removeMany, { ids: [a] })).rejects.toThrow();
+
+    const r = await admin.mutation(api.leads.removeMany, { ids: [a, b, a] });
+    expect(r.deleted).toBe(2);
+    const state = await t.run(async (ctx) => ({
+      leads: (await ctx.db.query("leads").collect()).map((l) => l._id),
+      clients: await ctx.db.query("clients").collect(),
+      convs: await ctx.db.query("conversations").collect(),
+      logs: await ctx.db.query("activityLogs").collect(),
+    }));
+    expect(state.leads).toEqual([keep]);
+    expect(state.clients[0].leadId).toBeUndefined();
+    expect(state.convs[0].leadId).toBeUndefined();
+    expect(state.logs.some((l) => l.action === "Deleted leads (bulk)" && l.details?.startsWith("2 lead"))).toBe(true);
+  });
+
+  it("rifiuta più di 500 lead in una volta", async () => {
+    const t = makeApp();
+    const admin = await t.admin();
+    const id = await t.run((ctx) => ctx.db.insert("leads", lead("X", "X")));
+    await expect(admin.mutation(api.leads.removeMany, { ids: Array(501).fill(id) })).rejects.toThrow();
+  });
+});

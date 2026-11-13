@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { lossReasons } from "./schema";
 import { notify } from "./notify";
-import { requireUser } from "./lib/authz";
+import { requireAdmin, requireUser } from "./lib/authz";
 
 export const create = mutation({
   args: {
@@ -210,6 +210,43 @@ export const remove = mutation({
         timestamp: new Date().toISOString(),
       });
     }
+  },
+});
+
+/**
+ * Elimina DEFINITIVAMENTE piu' lead insieme (solo l'amministratore). Max 500 per chiamata.
+ * I clienti nati da questi lead restano (si scollega solo il riferimento); le chat collegate restano, senza il lead.
+ * Una sola riga nel registro attivita' con il numero e i primi nomi.
+ */
+export const removeMany = mutation({
+  args: { ids: v.array(v.id("leads")) },
+  handler: async (ctx, args) => {
+    const me = await requireAdmin(ctx);
+    if (args.ids.length === 0) return { deleted: 0 };
+    if (args.ids.length > 500) throw new Error("Too many leads in one go (max 500).");
+    const names: string[] = [];
+    let deleted = 0;
+    for (const id of new Set(args.ids)) {
+      const lead = await ctx.db.get(id);
+      if (!lead) continue;
+      for (const c of await ctx.db.query("clients").withIndex("by_leadId", (q) => q.eq("leadId", id)).collect()) {
+        await ctx.db.patch(c._id, { leadId: undefined });
+      }
+      for (const c of await ctx.db.query("conversations").withIndex("by_leadId", (q) => q.eq("leadId", id)).collect()) {
+        await ctx.db.patch(c._id, { leadId: undefined });
+      }
+      await ctx.db.delete(id);
+      deleted++;
+      if (names.length < 20) names.push(lead.company || lead.leadName);
+    }
+    await ctx.db.insert("activityLogs", {
+      userId: me.userId,
+      userName: `${me.name} ${me.surname}`,
+      action: "Deleted leads (bulk)",
+      details: `${deleted} lead: ${names.join(", ")}${deleted > names.length ? ", …" : ""}`.slice(0, 1000),
+      timestamp: new Date().toISOString(),
+    });
+    return { deleted };
   },
 });
 

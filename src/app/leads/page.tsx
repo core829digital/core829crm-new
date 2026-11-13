@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation } from "convex/react";
 import { api } from "convex/_generated/api";
+import type { Id } from "convex/_generated/dataModel";
 import LeadTable from "@/components/LeadTable";
 
 export default function LeadsPage() {
@@ -9,6 +10,7 @@ export default function LeadsPage() {
   const createLead = useMutation(api.leads.create);
   const updateLead = useMutation(api.leads.update);
   const deleteLead = useMutation(api.leads.remove);
+  const deleteMany = useMutation(api.leads.removeMany);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSave = async (data: any) => {
@@ -35,5 +37,10 @@ export default function LeadsPage() {
     );
   }
 
-  return <LeadTable leads={leads} onSave={handleSave} onDelete={handleDelete} />;
+  const handleDeleteMany = async (ids: string[]) => {
+    const r = await deleteMany({ ids: ids as Id<"leads">[] });
+    return r.deleted;
+  };
+
+  return <LeadTable leads={leads} onSave={handleSave} onDelete={handleDelete} onDeleteMany={handleDeleteMany} />;
 }
