@@ -28,7 +28,7 @@ export default function Navigation() {
   };
 
   return (
-    <GlassScene className="crm-nav" backdrop="/brand/glass-dark.webp" dim={0.3}>
+    <GlassScene className="crm-nav" backdrop="/brand/glass-flat-dark.png">
     <nav {...GLASS} className="bg-black text-white border-b border-zinc-800 relative">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center gap-1 sm:gap-4 h-14 overflow-x-auto no-scrollbar">

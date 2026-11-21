@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { GlassScene } from "@/components/ui/LiquidGlass";
+import { NeuralScene } from "@/components/ui/NeuralScene";
 import { GLASS } from "@/lib/glass";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthContext";
@@ -36,12 +36,7 @@ export default function LoginPage() {
 
   return (
     <main>
-    <GlassScene
-      className="login-scene min-h-screen"
-      backdrop="/brand/neural-flow.mp4"
-      dim={0.1}
-      style={{ "--image": "url(/brand/neural-flow-poster.jpg)" } as React.CSSProperties}
-    >
+    <NeuralScene className="login-scene min-h-screen">
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div {...GLASS} className="login-card bg-white rounded-2xl shadow-xl p-8 text-zinc-900">
@@ -89,7 +84,7 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
-    </GlassScene>
+    </NeuralScene>
     </main>
   );
 }
