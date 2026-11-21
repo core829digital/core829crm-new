@@ -1,5 +1,29 @@
 @import "tailwindcss";
 
+/* Saans (Displaay) e' un font commerciale: se e' installato sul dispositivo viene usato direttamente,
+   altrimenti si usa Inter (self-hosted da next/font). Configurazione identica ad Andromedia Web. */
+@font-face {
+  font-family: "Saans";
+  src: local("Saans"), local("Saans Regular"), local("Saans-Regular");
+  font-weight: 300 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Saans Display";
+  src: local("Saans Display"), local("SaansDisplay-Regular"), local("Saans Display Regular"), local("Saans");
+  font-weight: 300 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Saans Text";
+  src: local("Saans Text"), local("SaansText-Regular"), local("Saans Text Regular"), local("Saans");
+  font-weight: 300 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   /* Brand CORE829, Guidelines 1.0: Rosso Racing #FF2743, Bianco Polare #F8F8F8, Nero Pista #141416.
      Le scale standard di Tailwind (zinc, gray, slate, neutral, red) seguono il brand: ogni classe esistente si aggiorna da sola.
@@ -64,10 +88,9 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-brand: var(--font-michroma), "Arial Black", ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-michroma), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Saans Text", "Saans", var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Saans Display", "Saans", var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 }
 
 :root {
@@ -89,7 +112,7 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  font-family: "Saans Text", "Saans", var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   -webkit-tap-highlight-color: transparent;
   -webkit-overflow-scrolling: touch;
 }
@@ -98,18 +121,10 @@ input, select, textarea, button {
   font-size: 16px;
 }
 
-/* Gerarchia del brand: H1 Michroma maiuscolo, H2 e sotto DM Sans SemiBold. */
-h1 {
-  font-family: var(--font-michroma), "Arial Black", ui-sans-serif, system-ui, sans-serif;
-  font-weight: 400;
-  text-transform: uppercase;
-  letter-spacing: 0;
-  text-wrap: balance;
-}
-h2, h3, h4 {
-  font-family: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
-  font-weight: 600;
-  letter-spacing: -0.015em;
+h1, h2, h3, h4 {
+  font-family: "Saans Display", "Saans", var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 560;
+  letter-spacing: -0.03em;
   text-wrap: balance;
 }
 
@@ -291,4 +306,28 @@ h2, h3, h4 {
 button[class*="bg-red-"],
 a[class*="bg-red-"][class*="px-"] {
   border-radius: 9999px;
+}
+
+/* ============================================================
+   Liquid glass (components/ui/LiquidGlass.tsx)
+   Prima del caricamento (o senza JavaScript) la scena è un riquadro Rosso Racing piatto con i pulsanti normali;
+   a libreria pronta l'elemento custom prende il controllo e i pulsanti diventano vetro.
+   ============================================================ */
+.glass-scene {
+  display: block;
+  position: relative;
+  min-height: 0;
+  background: #ff2743;
+}
+.glass-scene:defined {
+  background: transparent;
+}
+.glass-scene:defined [glass] {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: #141416;
+  --glass-tint: rgba(255, 39, 67, 0.28);
+  --glass-frost: 0.12;
+  --glass-shadow: 0.35;
 }
