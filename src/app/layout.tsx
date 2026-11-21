@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans, Michroma } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import ConvexWrapper from "@/components/ConvexWrapper";
 import AppShell from "@/components/AppShell";
@@ -22,17 +22,18 @@ export const viewport: Viewport = {
   themeColor: "#141416",
 };
 
-// Tipografia del brand CORE829 (Guidelines 1.0): Michroma per H1 ed etichette, DM Sans per testi e interfacce.
-const dmSans = DM_Sans({
-  variable: "--font-dm-sans",
+// Stack tipografico: "Saans" se installato, altrimenti Inter self-hosted da next/font, più JetBrains Mono.
+// Michroma/DM Sans (brand) valutati e scartati: non coprono cirillico e greco.
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin", "latin-ext"],
   display: "swap",
 });
 
-const michroma = Michroma({
-  variable: "--font-michroma",
-  subsets: ["latin", "latin-ext"],
-  weight: "400",
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
+  subsets: ["latin"],
+  weight: ["400", "500"],
   display: "swap",
 });
 
@@ -44,7 +45,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${dmSans.variable} ${michroma.variable}`}>
+    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <body className="min-h-screen bg-[#f8f8f8]">
         <ConvexWrapper>
           <AppShell>{children}</AppShell>

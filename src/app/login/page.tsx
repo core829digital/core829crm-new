@@ -1,5 +1,6 @@
 "use client";
 
+import { GlassScene, GLASS } from "@/components/ui/LiquidGlass";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthContext";
@@ -33,13 +34,11 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-zinc-950">
+    <main className="min-h-screen flex items-center justify-center p-4 bg-zinc-950">
       <div className="w-full max-w-sm">
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <div className="flex justify-center mb-6">
-            <div className="bg-red-500 rounded-full flex h-16 w-16 items-center justify-center">
-              <Image src="/brand/symbol-white.svg" alt="Core829" width={40} height={27} priority unoptimized className="h-7 w-auto" />
-            </div>
+            <Image src="/brand/app-icon.svg" alt="Core829" width={64} height={64} priority unoptimized className="h-16 w-16 rounded-[22%]" />
           </div>
           <h1 className="text-xl font-bold text-center mb-1">Core829 CRM</h1>
           <p className="text-sm text-zinc-400 text-center mb-6">Sign in with your credentials</p>
@@ -69,18 +68,21 @@ export default function LoginPage() {
               <p className="text-sm text-red-600 text-center">{error}</p>
             )}
 
-            <button
-              type="submit"
-              disabled={loading || !userId || !password}
-              className="w-full bg-black text-white py-2.5 rounded-lg text-sm font-medium hover:bg-zinc-800 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
-            >
-              {loading ? <Loader2 size={16} className="animate-spin" /> : <LogIn size={16} />}
-              {loading ? "Signing in..." : "Sign In"}
-            </button>
+            <GlassScene className="overflow-hidden rounded-full p-1.5">
+              <button
+                {...GLASS}
+                type="submit"
+                disabled={loading || !userId || !password}
+                className="w-full py-2.5 rounded-full text-sm font-medium text-[#141416] disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+              >
+                {loading ? <Loader2 size={16} className="animate-spin" /> : <LogIn size={16} />}
+                {loading ? "Signing in..." : "Sign In"}
+              </button>
+            </GlassScene>
           </form>
 
         </div>
       </div>
-    </div>
+    </main>
   );
 }
