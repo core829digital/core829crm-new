@@ -33,12 +33,12 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-950">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-zinc-950">
       <div className="w-full max-w-sm">
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <div className="flex justify-center mb-6">
-            <div className="bg-black rounded-full p-3 shadow-lg">
-              <Image src="/logo-icon.png" alt="Core829" width={32} height={32} priority />
+            <div className="bg-red-500 rounded-full flex h-16 w-16 items-center justify-center">
+              <Image src="/brand/symbol-white.svg" alt="Core829" width={40} height={27} priority unoptimized className="h-7 w-auto" />
             </div>
           </div>
           <h1 className="text-xl font-bold text-center mb-1">Core829 CRM</h1>

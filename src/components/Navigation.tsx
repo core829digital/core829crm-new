@@ -30,7 +30,7 @@ export default function Navigation() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center gap-1 sm:gap-4 h-14 overflow-x-auto no-scrollbar">
           <Link href="/" className="shrink-0 mr-1">
-            <Image src="/logo-icon.png" alt="Core829" width={28} height={28} priority />
+            <Image src="/brand/symbol-white.svg" alt="Core829" width={41} height={28} priority unoptimized className="h-7 w-auto" />
           </Link>
 
           {links.map((link) => {
@@ -82,7 +82,7 @@ export default function Navigation() {
 
           <div className="ml-auto flex items-center gap-1.5 shrink-0 pl-2 border-l border-zinc-700">
             <NotificationBell />
-            <Link href="/account" title="My account" className="hidden sm:flex items-center gap-2.5 bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-lg px-3 py-1.5 border border-zinc-700/50 hover:border-zinc-500">
+            <Link href="/account" title="My account" className="hidden sm:flex items-center gap-2.5 bg-zinc-900 rounded-lg px-3 py-1.5 border border-zinc-700/50 hover:border-zinc-500">
               <div className="text-right">
                 <div className="text-xs font-medium text-white leading-tight">
                   {user?.name} {user?.surname}
@@ -92,7 +92,7 @@ export default function Navigation() {
                 </div>
               </div>
             </Link>
-            <div className="sm:hidden bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-md px-2 py-1">
+            <div className="sm:hidden bg-zinc-900 rounded-md px-2 py-1">
               <div className="text-[10px] text-zinc-300 leading-tight">{user?.userId}</div>
             </div>
             <button

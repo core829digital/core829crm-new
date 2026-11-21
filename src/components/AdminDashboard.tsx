@@ -452,15 +452,15 @@ function UserPerformance() {
 }
 
 const PRESET_COLORS = [
-  { label: "Dark", bg: "#111217", text: "#ffffff" },
-  { label: "Red", bg: "#e52139", text: "#ffffff" },
+  { label: "Dark", bg: "#141416", text: "#f8f8f8" },
+  { label: "Red", bg: "#ff2743", text: "#141416" },
   { label: "Blue", bg: "#2563eb", text: "#ffffff" },
   { label: "Green", bg: "#16a34a", text: "#ffffff" },
   { label: "Amber", bg: "#d97706", text: "#ffffff" },
   { label: "Purple", bg: "#9333ea", text: "#ffffff" },
   { label: "Zinc", bg: "#27272a", text: "#ffffff" },
   { label: "Rose", bg: "#e11d48", text: "#ffffff" },
-  { label: "White", bg: "#ffffff", text: "#111217" },
+  { label: "White", bg: "#f8f8f8", text: "#141416" },
 ];
 
 function AnnouncementsManagement() {
@@ -470,14 +470,14 @@ function AnnouncementsManagement() {
   const removeAnnouncement = useMutation(api.announcements.remove);
 
   const [text, setText] = useState("");
-  const [bgColor, setBgColor] = useState("#111217");
+  const [bgColor, setBgColor] = useState("#141416");
   const [textColor, setTextColor] = useState("#ffffff");
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<Id<"announcements"> | null>(null);
   const [errMsg, setErrMsg] = useState("");
 
   const resetForm = () => {
-    setText(""); setBgColor("#111217"); setTextColor("#ffffff"); setEditingId(null); setErrMsg("");
+    setText(""); setBgColor("#141416"); setTextColor("#ffffff"); setEditingId(null); setErrMsg("");
   };
 
   const handleSave = async () => {
