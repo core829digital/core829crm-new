@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { GlassScene } from "@/components/ui/LiquidGlass";
+import { GLASS } from "@/lib/glass";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthContext";
 import { Loader2, LogIn } from "lucide-react";
@@ -33,9 +35,16 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-4 bg-zinc-950">
+    <main>
+    <GlassScene
+      className="login-scene min-h-screen"
+      backdrop="/brand/neural-flow.mp4"
+      dim={0.1}
+      style={{ "--image": "url(/brand/neural-flow-poster.jpg)" } as React.CSSProperties}
+    >
+    <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div {...GLASS} className="login-card bg-white rounded-2xl shadow-xl p-8 text-zinc-900">
           <div className="flex justify-center mb-6">
             <Image src="/brand/app-icon.svg" alt="Core829" width={64} height={64} priority unoptimized className="h-16 w-16 rounded-[22%]" />
           </div>
@@ -79,6 +88,8 @@ export default function LoginPage() {
 
         </div>
       </div>
+    </div>
+    </GlassScene>
     </main>
   );
 }

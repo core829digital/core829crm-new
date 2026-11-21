@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { useAuth } from "./AuthContext";
 import NotificationBell from "./NotificationBell";
+import { GlassScene } from "@/components/ui/LiquidGlass";
+import { GLASS } from "@/lib/glass";
 import { LayoutDashboard, KanbanSquare, Table2, TrendingUp, CalendarDays, Users, Shield, LogOut, MessageCircle, DatabaseZap } from "lucide-react";
 
 const links = [
@@ -26,11 +28,12 @@ export default function Navigation() {
   };
 
   return (
-    <nav className="bg-black text-white border-b border-zinc-800 relative">
+    <GlassScene className="crm-nav" backdrop="/brand/glass-dark.webp" dim={0.3}>
+    <nav {...GLASS} className="bg-black text-white border-b border-zinc-800 relative">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center gap-1 sm:gap-4 h-14 overflow-x-auto no-scrollbar">
-          <Link href="/" className="shrink-0 mr-1">
-            <Image src="/brand/symbol-white.svg" alt="Core829" width={61} height={41} priority unoptimized className="h-10 w-auto" />
+          <Link href="/" className="shrink-0 mr-2 pl-1">
+            <Image src="/brand/symbol-white.svg" alt="Core829" width={61} height={41} priority unoptimized className="h-8 w-auto" />
           </Link>
 
           {links.map((link) => {
@@ -106,5 +109,6 @@ export default function Navigation() {
         </div>
       </div>
     </nav>
+    </GlassScene>
   );
 }

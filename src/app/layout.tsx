@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
-import GlassLayer from "@/components/ui/GlassLayer";
 import "./globals.css";
 import ConvexWrapper from "@/components/ConvexWrapper";
 import AppShell from "@/components/AppShell";
@@ -50,7 +49,6 @@ export default function RootLayout({
       <body className="min-h-screen bg-[#f8f8f8]">
         <ConvexWrapper>
           <AppShell>{children}</AppShell>
-          <GlassLayer />
         </ConvexWrapper>
       </body>
     </html>
