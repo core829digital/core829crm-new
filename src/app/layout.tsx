@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { DM_Sans, Michroma } from "next/font/google";
 import "./globals.css";
 import ConvexWrapper from "@/components/ConvexWrapper";
 import AppShell from "@/components/AppShell";
@@ -7,15 +7,10 @@ import AppShell from "@/components/AppShell";
 export const metadata: Metadata = {
   title: "Core829 CRM",
   description: "Sales Tracker CRM for setters and closers",
-  icons: {
-    icon: "/CORE829%20LARGE%20PX%20logo%20no%20letters.png",
-    apple: "/CORE829%20LARGE%20PX%20logo%20no%20letters.png",
-  },
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Core829 CRM" },
   openGraph: {
     title: "Core829 CRM",
     description: "Sales Tracker CRM for setters and closers",
-    images: [{ url: "/CORE829%20LARGE%20PX%20logo%20no%20letters.png" }],
   },
 };
 
@@ -24,21 +19,21 @@ export const viewport: Viewport = {
   initialScale: 1,
   minimumScale: 1,
   viewportFit: "cover",
-  themeColor: "#111217",
+  themeColor: "#141416",
 };
 
-// Stesso stack di Andromedia Web e di core829.net: "Saans" se installato sul dispositivo, altrimenti Inter
-// self-hosted da next/font (font variabile: normale, bold e ogni peso intermedio), piu' JetBrains Mono.
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
+// Tipografia del brand CORE829 (Guidelines 1.0): Michroma per H1 ed etichette, DM Sans per testi e interfacce.
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
+  subsets: ["latin", "latin-ext"],
   display: "swap",
 });
 
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-jetbrains-mono",
-  subsets: ["latin"],
-  weight: ["400", "500"],
+const michroma = Michroma({
+  variable: "--font-michroma",
+  subsets: ["latin", "latin-ext"],
+  weight: "400",
+  display: "swap",
 });
 
 export const dynamic = "force-dynamic";
@@ -49,8 +44,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
-      <body className="min-h-screen bg-[#f6f8fa]">
+    <html lang="en" className={`${dmSans.variable} ${michroma.variable}`}>
+      <body className="min-h-screen bg-[#f8f8f8]">
         <ConvexWrapper>
           <AppShell>{children}</AppShell>
         </ConvexWrapper>
