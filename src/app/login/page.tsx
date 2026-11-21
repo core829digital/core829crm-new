@@ -1,6 +1,5 @@
 "use client";
 
-import { GlassScene, GLASS } from "@/components/ui/LiquidGlass";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthContext";
@@ -68,17 +67,14 @@ export default function LoginPage() {
               <p className="text-sm text-red-600 text-center">{error}</p>
             )}
 
-            <GlassScene className="overflow-hidden rounded-full p-1.5">
-              <button
-                {...GLASS}
-                type="submit"
-                disabled={loading || !userId || !password}
-                className="w-full py-2.5 rounded-full text-sm font-medium text-[#141416] disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
-              >
-                {loading ? <Loader2 size={16} className="animate-spin" /> : <LogIn size={16} />}
-                {loading ? "Signing in..." : "Sign In"}
-              </button>
-            </GlassScene>
+            <button
+              type="submit"
+              disabled={loading || !userId || !password}
+              className="btn btn-primary w-full py-2.5 disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {loading ? <Loader2 size={16} className="animate-spin" /> : <LogIn size={16} />}
+              {loading ? "Signing in..." : "Sign In"}
+            </button>
           </form>
 
         </div>

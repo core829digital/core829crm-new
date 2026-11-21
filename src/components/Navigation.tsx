@@ -30,7 +30,7 @@ export default function Navigation() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center gap-1 sm:gap-4 h-14 overflow-x-auto no-scrollbar">
           <Link href="/" className="shrink-0 mr-1">
-            <Image src="/brand/app-icon.svg" alt="Core829" width={36} height={36} priority unoptimized className="h-9 w-9 rounded-[22%]" />
+            <Image src="/brand/symbol-white.svg" alt="Core829" width={61} height={41} priority unoptimized className="h-10 w-auto" />
           </Link>
 
           {links.map((link) => {
